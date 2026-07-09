@@ -1,0 +1,28 @@
+Messstelle:                Zug
+HZB-Nummer:                100966
+Errichtet:                 1992
+Sachgebiet:                NLV
+Dienststelle:              HD-Vorarlberg
+Messstellenbetreiber:      Hydrographischer Dienst
+
+Höhe:
+ gültig seit:              Höhe [m ü.A.]:
+  01.09.1992               1503
+  01.10.2023               1510
+
+Geographische Koordinaten (Referenzellipsoid: Bessel 1841):
+ gültig seit:              Länge (Grad,Min,Sek):    Breite  (Grad,Min,Sek):
+  01.10.2023               10 06 15                 47 11 57
+  01.09.1992               10 06 36                 47 12 02
+
+Messgrößen/Messart:
+ gültig seit:  gültig bis: Messgröße/Messart:
+  01.09.1992               Temperatur/Fl.Thermometer-händische Messung
+  01.09.1992               Temperatur/Bim.Thermometer-Schreibstreifen manuell
+  08.10.2009               Temperatur/Halbwid.Thermometer (Hütte)-Datensammler
+  01.09.1992               Niederschlag/Ombrometer, 500 cm²-händische Messung
+  04.05.2001   30.09.2023  Niederschlag/Wippe, 500 cm², n.beh.-Datensammler
+  01.10.2023               Niederschlag/elekt.Waage, 500 cm², beh.-Datensammler -> DFÜ
+  01.01.1993   01.01.2001  Niederschlag/Reg.Gerät 500 cm², n.beh.-Schreibstreifen manuell
+  01.09.1992               Schneehöhe/Schneepegel-händische Messung
+  01.09.1992               Neuschnee/Schneebrett-händische Messung

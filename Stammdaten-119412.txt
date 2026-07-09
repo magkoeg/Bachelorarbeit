@@ -1,0 +1,24 @@
+Messstelle:                Gschnitz
+HZB-Nummer:                119412
+Errichtet:                 1992
+Sachgebiet:                NLV
+Dienststelle:              HD-Tirol
+Messstellenbetreiber:      Hydrographischer Dienst
+
+Höhe:
+ gültig seit:              Höhe [m ü.A.]:
+  19.10.1992               1280
+
+Geographische Koordinaten (Referenzellipsoid: Bessel 1841):
+ gültig seit:              Länge (Grad,Min,Sek):    Breite  (Grad,Min,Sek):
+  19.10.1992               11 19 57                 47 01 42
+
+Messgrößen/Messart:
+ gültig seit:  gültig bis: Messgröße/Messart:
+  19.06.2013               Temperatur/Halbwid.Thermometer-Datensammler -> DFÜ
+  19.06.2013               Temperatur/Halbwid.Thermometer-händische Messung
+  19.06.2013   01.04.2014  Luftfeuchte/Hygrometer (elektr.Änderung)-Datensammler -> DFÜ
+  19.10.1992               Niederschlag/Ombrometer, 500 cm²-händische Messung
+  19.06.2013               Niederschlag/elekt.Waage, 200 cm², beh.-Datensammler -> DFÜ
+  19.10.1992               Schneehöhe/Schneepegel-händische Messung
+  19.10.1992               Neuschnee/Schneebrett-händische Messung

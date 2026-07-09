@@ -1,0 +1,25 @@
+Messstelle:                Trins
+HZB-Nummer:                102368
+Errichtet:                 1891
+Sachgebiet:                NLV
+Dienststelle:              HD-Tirol
+Messstellenbetreiber:      Hydrographischer Dienst
+
+Höhe:
+ gültig seit:              Höhe [m ü.A.]:
+  01.07.1891               1210
+  15.10.1957               1235
+
+Geographische Koordinaten (Referenzellipsoid: Bessel 1841):
+ gültig seit:              Länge (Grad,Min,Sek):    Breite  (Grad,Min,Sek):
+  15.10.1957               11 25 06                 47 05 04
+  01.07.1891               11 25 00                 47 05 02
+
+Messgrößen/Messart:
+ gültig seit:  gültig bis: Messgröße/Messart:
+  19.04.1946               Temperatur/Fl.Thermometer-händische Messung
+  14.07.2009               Temperatur/Halbwid.Thermometer-Datensammler -> DFÜ
+  28.02.2020               Luftfeuchte/Hygrometer (elektr.Änderung)-Datensammler -> DFÜ
+  01.07.1895               Niederschlag/Ombrometer, 500 cm²-händische Messung
+  01.07.1891               Schneehöhe/Schneepegel-händische Messung
+  01.07.1891               Neuschnee/Schneebrett-händische Messung

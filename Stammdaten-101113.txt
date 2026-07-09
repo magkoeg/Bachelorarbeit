@@ -1,0 +1,35 @@
+Messstelle:                Zürs
+HZB-Nummer:                101113
+Errichtet:                 1910
+Sachgebiet:                NLV
+Dienststelle:              HD-Vorarlberg
+Messstellenbetreiber:      Hydrographischer Dienst
+
+Höhe:
+ gültig seit:              Höhe [m ü.A.]:
+  01.01.1910               1720
+  01.06.1939               1711
+  01.03.1982               1720
+  01.01.1995               1717
+  17.12.2009               1707
+
+Geographische Koordinaten (Referenzellipsoid: Bessel 1841):
+ gültig seit:              Länge (Grad,Min,Sek):    Breite  (Grad,Min,Sek):
+  17.12.2009               10 09 48                 47 10 22
+  01.01.1995               10 09 57                 47 10 05
+  01.03.1982               10 09 57                 47 10 04
+  01.06.1939               10 09 52                 47 10 13
+  01.01.1910               10 09 51                 47 10 11
+
+Messgrößen/Messart:
+ gültig seit:  gültig bis: Messgröße/Messart:
+  01.01.1982               Temperatur/Fl.Thermometer-händische Messung
+  01.01.1982   01.01.2001  Temperatur/Bim.Thermometer-Schreibstreifen manuell
+  01.01.2001               Temperatur/Halbwid.Thermometer (Hütte)-Datensammler -> DFÜ
+  01.01.1910               Niederschlag/Ombrometer, 500 cm²-händische Messung
+  19.08.2010               Niederschlag/elekt.Waage, 500 cm², beh.-Datensammler -> DFÜ
+  01.01.1911               Schneehöhe/Schneepegel-händische Messung
+  19.08.2010               Schneehöhe/Ultraschall-Datensammler -> DFÜ
+  01.01.1911               Neuschnee/Schneebrett-händische Messung
+  01.01.1983               Wasserwert/Vol.Bestimmung-händische Messung
+  17.12.2009               Wasserwert/Schneekissen-Datensammler -> DFÜ
