@@ -1,0 +1,3553 @@
+---
+title: "Plots_BA"
+output: html_document
+date: "2026-04-16"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r Daten laden}
+#Daten laden 
+datagruem <- read.table(file = "C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/EZG_poschiavino/alpe_gruem_wet_dat/Alp_gruem_wet_dat.csv" , header = TRUE, sep =";", dec = ".")
+datacavaglia <- read.table(file = "C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/EZG_poschiavino/cavaglia_wet_dat/Cavaglia_wet_dat_vollstaendig.csv" , header = TRUE, sep =";", dec = ".")
+datarobbia <-read.table(file = "C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/EZG_poschiavino/robbia_wet_dat_aut/ogd-smn_rob_d_historical.csv", header = TRUE, sep =";", dec = ".")
+dataQleprese <- read.table(file = "C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/EZG_poschiavino/le_prese_abf_dat/17449_5191_2026-03-17_10-47-30/0078_Abfluss_Tagesmittel_1959-01-01_2025-12-31.csv", header = TRUE, sep = ";", dec = ".", fileEncoding = "latin1")
+dataQLech <- read.table(file = "C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/EZG_Lech/Q-Tagesmittel-200378.csv", header = TRUE , sep =";" , dec= ".", fileEncoding = "latin1")
+dataQGschnitzbach <- read.table(file = "C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/EZG_Gschnitzbach/Q-Tagesmittel-201566.csv", header = TRUE, sep = ";", dec = ".", fileEncoding = "latin1")
+datazug <- read.table(file = "C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/EZG_Lech/SH-Tageswerte-100966.csv", header = TRUE, sep = ";", dec = ".", fileEncoding = "latin1")
+datazuers <- read.table(file = "C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/EZG_Lech/SH-Tageswerte-101113.csv", header = TRUE, sep = ";", dec = ".", fileEncoding = "latin1")
+datalech <- read.table(file = "C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/EZG_Lech/SH-Tageswerte-101121.csv", header = TRUE, sep = ";", dec = ".", fileEncoding = "latin1")
+datatrins <- read.table(file = "C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/EZG_Gschnitzbach/SH-Tageswerte-102368.csv", header = TRUE, sep = ";", dec = ".", fileEncoding = "latin1")
+datagschnitz <- read.table(file ="C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/EZG_Gschnitzbach/SH-Tageswerte-119412.csv", header = TRUE, sep = ";", dec = ".", fileEncoding = "latin1")
+
+summary(datagruem)
+head(datagruem)
+names(datagruem)
+summary(datacavaglia)
+head(datacavaglia)
+names(datacavaglia)
+summary(datarobbia)
+head(datarobbia)
+names(datarobbia)
+summary(dataQleprese)
+head(dataQleprese)
+names(dataQleprese)
+summary(dataQLech)
+head(dataQLech)
+names(dataQLech)
+summary(dataQGschnitzbach)
+head(dataQGschnitzbach)
+names(dataQGschnitzbach)
+summary(datazug)
+head(datazug)
+names(datazug)
+summary(datazuers)
+head(datazuers)
+names(datazuers)
+summary(datalech)
+head(datalech)
+names(datalech)
+summary(datatrins)
+head(datatrins)
+names(datatrins)
+summary(datagschnitz)
+head(datagschnitz)
+names(datagschnitz)
+
+
+options(scipen = 999)
+```
+
+```{r Daten vorbereiten}
+#Daten vorbereiten 
+
+library(zoo)
+
+datacavaglia$date <- as.POSIXct(datacavaglia$measure_date, format = "%d.%m.%Y %H:%M")
+datacavaglia$date <-as.Date(datacavaglia$date)
+datacavaglia$hs <- c(datacavaglia$Hs_m)
+datacavaglia$hs <- as.numeric(datacavaglia$hs)
+full_dates_cav <- data.frame(date = seq(min(datacavaglia$date),max(datacavaglia$date),by = "day"))
+datacavaglia <- merge(full_dates_cav, datacavaglia, by = "date", all.x = TRUE)
+datacavaglia$monat <- format(datacavaglia$date, "%m")
+datacavaglia$hs[is.na(datacavaglia$hs) & datacavaglia$monat %in% c("06","07","08","09")] <- 0
+datacavaglia$hs[is.na(datacavaglia$hs)] <- 0
+
+
+
+datagruem$date <- as.POSIXct(datagruem$measure_date, format = "%d.%m.%Y %H:%M")
+datagruem$date <-as.Date(datagruem$date)
+datagruem$hs <- c(datagruem$Hs_m)
+datagruem$hs <- as.numeric(datagruem$hs)
+full_dates_gruem <- data.frame(date = seq(min(datagruem$date),max(datagruem$date),by = "day"))
+datagruem <- merge(full_dates_gruem, datagruem, by = "date", all.x = TRUE)
+datagruem$monat <- format(datagruem$date, "%m")
+datagruem$hs[is.na(datagruem$hs) & datagruem$monat %in% c("06","07","08","09")] <- 0
+datagruem$hs[is.na(datagruem$hs)] <- 0
+
+
+
+
+datarobbia$date <- as.POSIXct(datarobbia$reference_timestamp, format = "%d.%m.%Y")
+datarobbia$date <- as.Date (datarobbia$date)
+datarobbia$hs <- c(datarobbia$schnee_man_m)
+datarobbia$hs <- as.numeric(datarobbia$hs)
+full_dates_rob <- data.frame(date = seq(min(datarobbia$date),max(datarobbia$date),by = "day"))
+datarobbia <- merge(full_dates_rob, datarobbia, by = "date", all.x = TRUE)
+datarobbia$monat <- format(datarobbia$date, "%m")
+datarobbia$hs[is.na(datarobbia$hs) & datarobbia$monat %in% c("06","07","08","09")] <- 0
+datarobbia$hs[is.na(datarobbia$hs)] <- 0
+
+
+datalech$date <- as.POSIXct(datalech$Werte_Lech., format = "%d.%m.%Y")
+datalech$date <-as.Date(datalech$date)
+datalech$hs <- c(datalech$HS_m)
+datalech$hs <- as.numeric(datalech$hs)
+full_dates_lech <- data.frame(date = seq(min(datalech$date),max(datalech$date),by = "day"))
+datalech <- merge(full_dates_lech, datalech, by = "date", all.x = TRUE)
+datalech$monat <- format(datalech$date, "%m")
+datalech$hs[is.na(datalech$hs) & datalech$monat %in% c("06","07","08","09")] <- 0
+datalech$hs[is.na(datalech$hs)] <- 0
+
+
+datazuers$date <- as.POSIXct(datazuers$Werte_Zuers., format = "%d.%m.%Y")
+datazuers$date <-as.Date(datazuers$date)
+datazuers$hs <- c(datazuers$HS_m)
+datazuers$hs <- as.numeric(datazuers$hs)
+full_dates_zuers <- data.frame(date = seq(min(datazuers$date),max(datazuers$date),by = "day"))
+datazuers <- merge(full_dates_zuers, datazuers, by = "date", all.x = TRUE)
+datazuers$monat <- format(datazuers$date, "%m")
+datazuers$hs[is.na(datazuers$hs) & datazuers$monat %in% c("06","07","08","09")] <- 0
+datazuers$hs[is.na(datazuers$hs)] <- 0
+
+
+datazug$date <- as.POSIXct(datazug$Werte_Zug., format = "%d.%m.%Y")
+datazug$date <-as.Date(datazug$date)
+datazug$hs <- c(datazug$HS_m)
+datazug$hs <- as.numeric(datazug$hs)
+full_dates_zug <- data.frame(date = seq(min(datazug$date),max(datazug$date),by = "day"))
+datazug <- merge(full_dates_zug, datazug, by = "date", all.x = TRUE)
+datazug$monat <- format(datazug$date, "%m")
+datazug$hs[is.na(datazug$hs) & datazug$monat %in% c("06","07","08","09")] <- 0
+datazug$hs[is.na(datazug$hs)] <- 0
+
+
+datatrins$date <- as.POSIXct(datatrins$Werte_Trins., format = "%d.%m.%Y")
+datatrins$date <-as.Date(datatrins$date)
+datatrins$hs <- c(datatrins$HS_m)
+datatrins$hs <- as.numeric(datatrins$hs)
+full_dates_trins <- data.frame(date = seq(min(datatrins$date),max(datatrins$date),by = "day"))
+datatrins <- merge(full_dates_trins, datatrins, by = "date", all.x = TRUE)
+datatrins$monat <- format(datatrins$date, "%m")
+datatrins$hs[is.na(datatrins$hs) & datatrins$monat %in% c("06","07","08","09")] <- 0
+datatrins$hs[is.na(datatrins$hs)] <- 0
+
+
+datagschnitz$date <- as.POSIXct(datagschnitz$Werte_Gschnitz., format = "%d.%m.%Y")
+datagschnitz$date <-as.Date(datagschnitz$date)
+datagschnitz$hs <- c(datagschnitz$HS_m)
+datagschnitz$hs <- as.numeric(datagschnitz$hs)
+full_dates_gsch <- data.frame(date = seq(min(datagschnitz$date),max(datagschnitz$date),by = "day"))
+datagschnitz <- merge(full_dates_gsch, datagschnitz, by = "date", all.x = TRUE)
+datagschnitz$monat <- format(datagschnitz$date, "%m")
+datagschnitz$hs[is.na(datagschnitz$hs) & datagschnitz$monat %in% c("06","07","08","09")] <- 0
+datagschnitz$hs[is.na(datagschnitz$hs)] <- 0
+
+
+dataQleprese$Abfluss <- as.numeric(dataQleprese$Wert)
+dataQleprese$date <-as.Date(dataQleprese$Zeitstempel, format = "%d.%m.%Y")
+dataQLech$Abfluss <- as.numeric(dataQLech$X)
+dataQLech$date <-as.Date(dataQLech$Werte., format = "%d.%m.%Y")
+dataQGschnitzbach$Abfluss <- as.numeric(dataQGschnitzbach$X)
+dataQGschnitzbach$date <-as.Date(dataQGschnitzbach$Werte., format = "%d.%m.%Y")
+
+
+```
+
+```{r Graphische Darstellung des Abflusses}
+#Graphische Darstellungen des Abflusses
+
+  #Abfluss für den gesamten Zeitraum
+ 
+    #Poschiavino
+
+library(ggplot2)
+library(scales)  
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+
+    
+plot_Qleprese_ges <- ggplot(dataQleprese, aes(x = date , y = Abfluss ))+
+  geom_line(color = "steelblue", linewidth = 0.7) +
+  scale_x_date(date_breaks = "10 years",            
+               date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("Abfluss [m³/s]") +
+  labs(title = "Abfluss des Poschiavino") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+  
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/Q_leprese_ges.png",plot = plot_Qleprese_ges, width = 8, height = 5, dpi = 300, bg= "white")
+
+    #Lech
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+
+
+    
+plot_Qlech_ges <- ggplot(dataQLech, aes(x = date , y = Abfluss ))+
+  geom_line(color = "steelblue", linewidth = 0.7) +
+  scale_x_date(date_breaks = "10 years",            
+               date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("Abfluss [m³/s]") +
+  labs(title = "Abfluss des Lechs") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+  
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/Q_lech_ges.png", plot = plot_Qlech_ges, width = 8, height = 5, dpi = 300, bg = "white")
+
+
+    #Gschnitzbach
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+
+    
+plot_Qgsch_ges <- ggplot(dataQGschnitzbach, aes(x = date , y = Abfluss ))+
+  geom_line(color = "steelblue", linewidth = 0.7) +
+  scale_x_date(date_breaks = "10 years",            
+               date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("Abfluss [m³/s]") +
+  labs(title = "Abfluss des Gschnitzbachs") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/Q_gsch_ges.png", plot = plot_Qgsch_ges, width = 8, height = 5, dpi = 300, bg = "white")
+
+  # Plot des Abflusses aufgeschlüsselt nach Jahren (Beispiel auf alle anderen Anwendbar)
+
+    #Poschiavino
+      #Für Beobachtungszeitraum 
+library(scales)
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+plot_Qleprese_sub <- ggplot(dataQleprese[dataQleprese$date >= as.Date("1992-01-01") & dataQleprese$date <= as.Date("2022-08-31"),],
+       aes(x = date, y = Abfluss)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  geom_smooth(colour="red")+
+  scale_x_date(date_breaks = "5 year", date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("Abfluss [m³/s]") +
+  labs(title = "Abfluss des Poschiavino (1992-2022)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+ 
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/Q_leprese_sub.png", plot = plot_Qleprese_sub, width = 8, height = 5, dpi = 300, bg = "white")
+
+#Lech
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+plot_Qlech_sub <- ggplot(dataQLech[dataQLech$date >= as.Date("1992-01-01") & dataQLech$date <= as.Date("2022-08-31"),],
+       aes(x = date, y = Abfluss)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  geom_smooth(colour="red")+
+  scale_x_date(date_breaks = "5 year", date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("Abfluss [m³/s]") +
+  labs(title = "Abfluss des Lechs (1992-2022)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+ 
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/Q_lech_sub.png", plot = plot_Qlech_sub, width = 8, height = 5, dpi = 300, bg = "white")
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+plot_Qlech_1996 <- ggplot(dataQLech[dataQLech$date >= as.Date("1992-01-01") & dataQLech$date <= as.Date("1996-08-31"),],
+       aes(x = date, y = Abfluss)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "3 month", date_labels = "%m") +
+  xlab("Zeit") +
+  ylab("Abfluss [m³/s]") +
+  labs(title = "Abfluss des Lechs (1992-1996)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+ 
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/Q_lech_1992_1996.png", plot = plot_Qlech_1996, width = 8, height = 5, dpi = 300, bg = "white")
+
+#Gschnitzbach
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+plot_Qgsch_sub <- ggplot(dataQGschnitzbach[dataQGschnitzbach$date >= as.Date("1992-01-01") & dataQGschnitzbach$date <= as.Date("2022-08-31"),],
+       aes(x = date, y = Abfluss)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  geom_smooth(colour="red")+
+  scale_x_date(date_breaks = "5 year", date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("Abfluss [m³/s]") +
+  labs(title = "Abfluss des Gschnitzbachs (1992-2022)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+ 
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/Q_gsch_sub.png", plot = plot_Qgsch_sub, width = 8, height = 5, dpi = 300, bg = "white")
+
+
+# 30 jahr Periode
+
+dataQleprese_kp <- dataQleprese %>%
+  mutate(
+    Jahr = year(date),
+    Tag = yday(date),
+    Tag_umkod = ifelse(Tag < 200, Tag + 365, Tag ),
+    kp = paste0(floor((Jahr - 1959) / 30) * 30 + 1959,"-", floor((Jahr- 1959) /30)*30 + 1989, floor((Jahr- 1959)/ 30) * 30 + 2019)
+  ) %>%
+  group_by(kp, Tag_umkod) %>%
+  summarise(
+    Abfluss_mean = mean(Abfluss, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+ggplot(dataQleprese_kp,
+       aes(x = Tag_umkod, y = Abfluss_mean,
+           color = kp,
+           group = kp)) +
+  geom_line(linewidth = 1) +
+    scale_x_continuous(breaks = c(200, 250, 300, 350, 400, 450, 500, 550), labels = c(200, 250, 300, 350, 34, 84, 134, 184)) + 
+  xlab("Tag im Jahr") +
+  ylab("Abfluss in m³/s") +
+  labs(title = "Abfluss des Poschiavino in Le Prese ", subtitle = "Gemittelt auf den Tag der 30 Jahr Periode") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5))
+
+
+
+dataQlech_kp <- dataQLech %>%
+  mutate(
+    Jahr = year(date),
+    Tag = yday(date),
+    Tag_umkod = ifelse(Tag < 200, Tag + 365, Tag ),
+    kp = paste0(floor((Jahr - 1951) / 30) * 30 + 1951,"-", floor((Jahr- 1951) /30)*30 + 1981, floor((Jahr- 1951)/ 30) * 30 + 2011)
+  ) %>%
+  group_by(kp, Tag_umkod) %>%
+  summarise(
+    Abfluss_mean = mean(Abfluss, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+ggplot(dataQleprese_kp,
+       aes(x = Tag_umkod, y = Abfluss_mean,
+           color = kp,
+           group = kp)) +
+  geom_line(linewidth = 1) +
+    scale_x_continuous(breaks = c(200, 250, 300, 350, 400, 450, 500, 550), labels = c(200, 250, 300, 350, 34, 84, 134, 184)) + 
+  xlab("Tag im Jahr") +
+  ylab("Abfluss in m³/s") +
+  labs(title = "Abfluss des Lech in Lech", subtitle = "Gemittelt auf den Tag der 30 Jahr Periode") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5))
+
+
+dataQgsch_kp <- dataQGschnitzbach %>%
+  mutate(
+    Jahr = year(date),
+    Tag = yday(date),
+    Tag_umkod = ifelse(Tag < 200, Tag + 365, Tag ),
+    kp = paste0(floor((Jahr - 1951) / 30) * 30 + 1951,"-", floor((Jahr- 1951) /30)*30 + 1981, floor((Jahr- 1951)/ 30) * 30 + 2011)
+  ) %>%
+  group_by(kp, Tag_umkod) %>%
+  summarise(
+    Abfluss_mean = mean(Abfluss, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+ggplot(dataQgsch_kp,
+       aes(x = Tag_umkod, y = Abfluss_mean,
+           color = kp,
+           group = kp)) +
+  geom_line(linewidth = 1) +
+    scale_x_continuous(breaks = c(200, 250, 300, 350, 400, 450, 500, 550), labels = c(200, 250, 300, 350, 34, 84, 134, 184)) + 
+  xlab("Tag im Jahr") +
+  ylab("Abfluss in m³/s") +
+  labs(title = "Abfluss des Gschnitzbach in Steinach am Brenner ", subtitle = "Gemittelt auf den Tag der 30 Jahr Periode") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5))
+
+# Abfluss im Frühjahr
+
+#Poschiavino
+
+
+y_wert <- median(s_Qleprese_ges$Abfluss, na.rm = TRUE) -
+             sen_Q_leprese_s_ges$estimates * median(s_Qleprese_ges$Tag, na.rm = TRUE)
+
+s_Qleprese_ges <- s_Qleprese_ges %>%
+  mutate(
+    Jahr = year(date),
+    Tag = yday(date)
+  )%>%
+  filter(Tag >= 59, Tag <= 181)
+
+ggplot(s_Qleprese_ges,
+       aes(x = Tag, y = Abfluss,
+           group = Jahr)) +
+  geom_line(colour = "grey") +  geom_abline(
+    slope = sen_Q_leprese_s_ges$estimates,
+    intercept = y_wert,
+    colour = "red",
+    linewidth = 1.2
+  ) +
+  labs(
+    title = "Abfluss in Le Prese",
+    x = "Tag des Jahres",
+    y = "Abfluss im m³/s",
+    color = "Jahr"
+  ) +
+  theme_minimal()
+
+```
+
+```{r Graphische Darstellung der Schneehöhen}
+#Graphische Darstellung der Schneehöhen 
+
+  #Schneehoehenplot über den gesamten Zeitraum (auf alle anwendbar)
+
+    #Poschiavino
+
+      #Cavaglia
+
+library(ggplot2)
+library(scales)  
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+
+      # Hoehe /Datum als numeric)
+datacavaglia$Schneehöhe <- as.numeric(datacavaglia$HS)
+datacavaglia$Schneehöhe_cm <-datacavaglia$Schneehöhe/10
+
+      # Plot erstellen
+plot_cav_hs_ges <- ggplot(datacavaglia, aes(x = date , y = Schneehöhe_cm ))+
+  geom_line(color = "steelblue", linewidth = 0.7) + 
+  scale_x_date(date_breaks = "10 years",            
+               date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("Schneehöhe [cm]") +
+  labs(title = "Schneehöhe in Cavaglia") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+
+
+
+
+        #Alp Gruem
+
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+
+      # Hoehe /Datum als numeric)
+datagruem$Schneehöhe <- as.numeric(datagruem$HS)
+datagruem$Schneehöhe_cm <-datagruem$Schneehöhe/10
+
+      # Plot erstellen
+plot_gruem_hs_ges <- ggplot(datagruem, aes(x = date , y = Schneehöhe_cm ))+
+  geom_line(color = "steelblue", linewidth = 0.7) +
+  scale_x_date(date_breaks = "10 years",            
+               date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("Schneehöhe [cm]") +
+  labs(title = "Schneehöhe in Alp Grüm") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+
+
+
+        #Robbia
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+
+      # Hoehe /Datum als numeric)
+datarobbia$Schneehöhe_man <- as.numeric(datarobbia$schnee_man)
+
+      # Plot erstellen
+plot_hs_robbia_ges <- ggplot(datarobbia, aes(x = date , y = Schneehöhe_man ))+
+  geom_line(color = "steelblue", linewidth = 0.7) +
+  scale_x_date(date_breaks = "10 years",            
+               date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("Schneehöhe [cm]") +
+  labs(title = "Schneehöhe in Robbia") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+library(patchwork)
+library(ggplot2)
+library(gt)
+
+plot_HS_EZG_poschiavino_ges <- (plot_cav_hs_ges + plot_gruem_hs_ges + plot_hs_robbia_ges) + plot_layout(ncol = 2) + plot_annotation (title = "Schneehöhen im Einzugsgebiet des Poschiavinos", theme = theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5 )))
+
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/HS_EZG_poschiavino_ges.png", plot = plot_HS_EZG_poschiavino_ges, width = 14, height = 10, dpi = 300, bg = "white")
+
+
+
+    #Lech
+      #Zug
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+
+      # Hoehe /Datum als numeric)
+datazug$Schneehöhe <- as.numeric(datazug$X)
+
+
+      # Plot erstellen
+plot_zug_hs_ges <- ggplot(datazug, aes(x = date , y = Schneehöhe ))+
+  geom_line(color = "steelblue", linewidth = 0.7) + 
+  scale_x_date(date_breaks = "10 years",            
+               date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("Schneehöhe [cm]") +
+  labs(title = "Schneehöhe in Zug") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+
+
+      #Zürs
+options(repr.plot.width = 100, repr.plot.height = 6) 
+
+      # Hoehe /Datum als numeric)
+datazuers$Schneehöhe <- as.numeric(datazuers$X)
+
+
+      # Plot erstellen
+plot_zuers_hs_ges <- ggplot(datazuers, aes(x = date , y = Schneehöhe ))+
+  geom_line(color = "steelblue", linewidth = 0.7) +
+  scale_x_date(date_breaks = "10 years",            
+               date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("Schneehöhe [cm]") +
+  labs(title = "Schneehöhe in Zuers") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+
+     #Lech
+options(repr.plot.width = 100, repr.plot.height = 6) 
+
+      # Hoehe /Datum als numeric)
+datalech$Schneehöhe <- as.numeric(datalech$HS_cm)
+
+
+      # Plot erstellen
+plot_lech_hs_ges <- ggplot(datalech, aes(x = date , y = Schneehöhe ))+
+  geom_line(color = "steelblue", linewidth=0.7) +
+  scale_x_date(date_breaks = "10 years",            
+               date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("Schneehöhe [cm]") +
+  labs(title = "Schneehöhe in Lech") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+plot_HS_EZG_Lech_ges <- (plot_lech_hs_ges + plot_zuers_hs_ges + plot_zug_hs_ges) + plot_layout(ncol = 2) + plot_annotation (title = "Schneehöhen im Einzugsgebiet des Lechs", theme = theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5 )))
+
+
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/HS_EZG_Lech_ges.png", plot = plot_HS_EZG_Lech_ges, width = 14, height = 10, dpi = 300, bg = "white")
+
+    #Gschnitz
+      #Trins
+options(repr.plot.width = 100, repr.plot.height = 6) 
+
+      # Hoehe /Datum als numeric)
+datatrins$Schneehöhe <- as.numeric(datatrins$X)
+
+      # Plot erstellen
+plot_trins_hs_ges <- ggplot(datatrins, aes(x = date , y = Schneehöhe ))+
+  geom_line(color = "steelblue", linewidth = 0.7) + 
+  scale_x_date(date_breaks = "10 years",            
+               date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("Schneehöhe [cm]") +
+  labs(title = "Schneehöhe in Trins") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+
+
+      #Gschnitz
+options(repr.plot.width = 100, repr.plot.height = 6) 
+
+      # Hoehe /Datum als numeric)
+datagschnitz$Schneehöhe <- as.numeric(datagschnitz$X)
+
+
+      # Plot erstellen
+plot_gsch_hs_ges <- ggplot(datagschnitz, aes(x = date , y = Schneehöhe ))+
+  geom_line(color = "steelblue", linewidth = 0.7) + 
+  scale_x_date(date_breaks = "10 years",            
+               date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("Schneehöhe [cm]") +
+  labs(title = "Schneehöhe in Gschnitz") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+plot_HS_EZG_gsch_ges <- (plot_trins_hs_ges + plot_gsch_hs_ges) + plot_layout(ncol = 2) + plot_annotation (title = "Schneehöhen im Einzugsgebiet des Gschnitzbachs", theme = theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5 )))
+
+
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/HS_EZG_gsch_ges.png", plot = plot_HS_EZG_gsch_ges, width = 14, height = 10, dpi = 300, bg = "white")
+
+# Plot der Schneehöhe aufgeschlüsselt nach Jahren (Beispiel auf alle anderen Anwendbar)
+
+  #Für Beobachtungszeitraum und wenige Jahre
+   #Poschiavino
+      #Cavaglia
+library(scales)
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/HS_cav_sub.png", plot = plot_cav_hs_sub, width = 8, height = 5, dpi = 300,bg = "white")
+
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+ggplot(datacavaglia[datacavaglia$date >= as.Date("1992-11-01") & datacavaglia$date <= as.Date("1996-10-31"),],
+       aes(x = date , y = Schneehöhe_cm)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "3 months", date_labels = "%m") +
+  xlab("Zeit") +
+  ylab("Schneehöhe in cm") +
+  labs(title = "Schneehöhen in Cavaglia (1.11.1992-31.10.1996)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+        #Alp Grüm
+library(scales)
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+plot_gruem_hs_sub <- ggplot(datagruem[datagruem$date >= as.Date("1992-01-01") & datagruem$date <= as.Date("2022-08-31"),],
+       aes(x = date , y = Schneehöhe_cm)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "5 year", date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("Schneehöhe in cm") +
+  labs(title = "Schneehöhe auf der Alp Grüm (1992-2022)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/HS_gruem_sub.png", plot = plot_gruem_hs_sub, width = 8, height = 5, dpi = 300,bg = "white")
+
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+ggplot(datagruem[datagruem$date >= as.Date("1992-11-01") & datagruem$date <= as.Date("1996-10-31"),],
+       aes(x = date , y = Schneehöhe_cm)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "3 months", date_labels = "%m") +
+  xlab("Zeit") +
+  ylab("Schneehöhe in cm") +
+  labs(title = "Schneehöhen auf der Alpe Grüm (1.11.1992-31.10.1996)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+        #Robbia
+library(scales)
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+plot_robbia_hs_sub <- ggplot(datarobbia[datarobbia$date >= as.Date("1992-01-01") & datarobbia$date <= as.Date("2022-08-31"),],
+       aes(x = date, y = schnee_man)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "5 year", date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("Schneehöhe in cm") +
+  labs(title = "Schneehöhe in Robbia (1992-2022)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/HS_robbia_sub.png", plot = plot_robbia_hs_sub, width = 8, height = 5, dpi = 300, bg = "white")
+
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+ggplot(datarobbia[datarobbia$date >= as.Date("1992-11-01") & datarobbia$date <= as.Date("1996-10-31"),],
+       aes(x = date, y = schnee_man)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "3 months", date_labels = "%m") +
+  xlab("Zeit") +
+  ylab("Schneehöhe in cm") +
+  labs(title = "Schneehöhen in Robbia (1.11.1992-31.10.1996)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+    #Lech
+      #Lech
+library(scales)
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+plot_lech_hs_sub <- ggplot(datalech[datalech$date >= as.Date("1992-01-01") & datalech$date <= as.Date("2022-08-31"),],
+       aes(x = date, y = Schneehöhe)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "5 year", date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("Schneehöhe in cm") +
+  labs(title = "Schneehöhe in Lech (1992-2022)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/HS_lech_sub.png", plot = plot_lech_hs_sub, width = 8, height = 5, dpi = 300, bg = "white")
+
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+ggplot(datalech[datalech$date >= as.Date("1992-11-01") & datalech$date <= as.Date("1996-10-31"),],
+       aes(x = date, y = Schneehöhe)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "3 months", date_labels = "%m") +
+  xlab("Zeit") +
+  ylab("Schneehöhe in cm") +
+  labs(title = "Schneehöhen in Lech (1.11.1992-31.10.1996)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+      #Zuers
+library(scales)
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+plot_zuers_hs_sub <- ggplot(datazuers[datazuers$date >= as.Date("1992-01-01") & datazuers$date <= as.Date("2022-08-31"),],
+       aes(x = date, y = Schneehöhe)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "5 year", date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("Schneehöhe in cm") +
+  labs(title = "Schneehöhe in Zürs (1992-2022)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/HS_zuers_sub.png", plot = plot_zuers_hs_sub, width = 8, height = 5, dpi = 300, bg = "white")
+
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+ggplot(datazuers[datazuers$date >= as.Date("1992-11-01") & datazuers$date <= as.Date("1996-10-31"),],
+       aes(x = date, y = Schneehöhe)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "3 months", date_labels = "%m") +
+  xlab("Zeit") +
+  ylab("Schneehöhe in cm") +
+  labs(title = "Schneehöhen in Zürs (1.11.1992-31.10.1996)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+      #Zug
+library(scales)
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+plot_zug_hs_sub <- ggplot(datazug[datazug$date >= as.Date("1992-01-01") & datazug$date <= as.Date("2022-08-31"),],
+       aes(x = date, y = Schneehöhe)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "5 year", date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("Schneehöhe in cm") +
+  labs(title = "Schneehöhe in Zug (1992-2022)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/HS_zug_sub.png", plot = plot_zug_hs_sub, width = 8, height = 5, dpi = 300, bg = "white")
+
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+ggplot(datazug[datazug$date >= as.Date("1992-11-01") & datazug$date <= as.Date("1996-10-31"),],
+       aes(x = date, y = Schneehöhe)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "3 months", date_labels = "%m") +
+  xlab("Zeit") +
+  ylab("Schneehöhe in cm") +
+  labs(title = "Schneehöhen in Zug (1.11.1992-31.10.1996)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+   #Gschnitzbach
+       #Trins
+library(scales)
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+plot_trins_hs_sub <- ggplot(datatrins[datatrins$date >= as.Date("1992-01-01") & datatrins$date <= as.Date("2022-08-31"),],
+       aes(x = date, y = Schneehöhe)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "5 year", date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("Schneehöhe in cm") +
+  labs(title = "Schneehöhe in Trins (1992-2022)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/HS_trins_sub.png", plot = plot_trins_hs_sub, width = 8, height = 5, dpi = 300, bg = "white")
+
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+ggplot(datatrins[datatrins$date >= as.Date("1992-11-01") & datatrins$date <= as.Date("1996-10-31"),],
+       aes(x = date, y = Schneehöhe)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "3 months", date_labels = "%m") +
+  xlab("Zeit") +
+  ylab("Schneehöhe in cm") +
+  labs(title = "Schneehöhen in Trins (1.11.1992-31.10.1996)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+        #Gschnitz
+library(scales)
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+plot_gsch_hs_sub <- ggplot(datagschnitz[datagschnitz$date >= as.Date("1992-01-01") & datagschnitz$date <= as.Date("2022-08-31"),],
+       aes(x = date, y = Schneehöhe)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "5 year", date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("Schneehöhe in cm") +
+  labs(title = "Schneehöhe in Gschnitz (1992-2022)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/HS_gsch_sub.png", plot = plot_gsch_hs_sub, width = 8, height = 5, dpi = 300, bg = "white")
+
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+plot_gsch_hs_1996 <- ggplot(datagschnitz[datagschnitz$date >= as.Date("1992-11-01") & datagschnitz$date <= as.Date("1996-10-31"),],
+       aes(x = date, y = Schneehöhe)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "3 months", date_labels = "%m") +
+  xlab("Zeit") +
+  ylab("Schneehöhe in cm") +
+  labs(title = "Schneehöhen in Gschnitz (1.11.1992-31.10.1996)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/HS_gsch_1996.png", plot = plot_gsch_hs_1996, width = 8, height = 5, dpi = 300, bg = "white")
+
+
+```
+
+```{r Graphische Darstellung des SWE}
+library(ggplot2)
+ #Plots SWE (auf alle anwendbar)
+
+
+  #Cavaglia
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+
+
+
+plot_cav_SWE_ges <- ggplot(datacavaglia, aes(x = date , y = SWE ))+
+  geom_line(color = "steelblue", linewidth=0.7) + 
+  scale_x_date(date_breaks = "10 years",            
+               date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("SWE [mm]") +
+  labs(title = "SWE in Cavaglia") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+
+
+  # Alp Grüm
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+
+
+
+plot_gruem_SWE_ges <- ggplot(datagruem, aes(x = date , y = SWE ))+
+  geom_line(color = "steelblue", linewidth=0.7) + 
+  scale_x_date(date_breaks = "10 years",            
+               date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("SWE [mm]") +
+  labs(title = "SWE auf der Alp Grüm") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+
+  #Robbia
+
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+
+
+
+
+plot_robbia_SWE_ges <- ggplot(datarobbia, aes(x = date , y = SWE ))+
+  geom_line(color = "steelblue", linewidth=0.7) +  
+  scale_x_date(date_breaks = "10 years",            
+               date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("SWE [mm]") +
+  labs(title = "SWE in Robbia") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+
+#Lech
+options(repr.plot.width = 100, repr.plot.height = 6) 
+
+
+
+plot_lech_SWE_ges <- ggplot(datalech, aes(x = date , y = SWE ))+
+  geom_line(color = "steelblue", linewidth=0.7) + 
+  scale_x_date(date_breaks = "10 years",            
+               date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("SWE [mm]") +
+  labs(title = "SWE in Lech") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+
+#Zug 
+options(repr.plot.width = 100, repr.plot.height = 6) 
+
+
+
+plot_zug_SWE_ges <- ggplot(datazug, aes(x = date , y = SWE ))+
+  geom_line(color = "steelblue", linewidth=0.7) + 
+  scale_x_date(date_breaks = "10 years",            
+               date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("SWE [mm]") +
+  labs(title = "SWE in Zug") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+
+#Zürs
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+
+
+
+plot_zuers_SWE_ges <- ggplot(datazuers, aes(x = date , y = SWE ))+
+  geom_line(color = "steelblue", linewidth=0.7) + 
+  scale_x_date(date_breaks = "10 years",            
+               date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("SWE [mm]") +
+  labs(title = "SWE in Zürs") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+#Trins
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+
+
+
+plot_trins_SWE_ges <- ggplot(datatrins, aes(x = date , y = SWE ))+
+  geom_line(color = "steelblue", linewidth=0.7) + 
+  scale_x_date(date_breaks = "10 years",            
+               date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("SWE [mm]") +
+  labs(title = "SWE in Trins") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+#Gschnitz
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+
+
+
+plot_gsch_SWE_ges <- ggplot(datagschnitz, aes(x = date , y = SWE ))+
+  geom_line(color = "steelblue", linewidth=0.7) + 
+  scale_x_date(date_breaks = "10 years",            
+               date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("SWE [mm]") +
+  labs(title = "SWE in Gschnitz") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+library(patchwork)
+library(ggplot2)
+
+plot_SWE_gesamt <- (plot_cav_SWE_ges + plot_gruem_SWE_ges + plot_robbia_SWE_ges + plot_lech_SWE_ges + plot_zuers_SWE_ges + plot_zug_SWE_ges + plot_trins_SWE_ges + plot_gsch_SWE_ges) + plot_layout(ncol = 2) + plot_annotation (title = "SWE-Zeitreihen aller Stationen für den gesamten Zeitraum", theme = theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5 )))
+
+
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/SWE_gesamt.png", plot = plot_SWE_gesamt, width = 14, height = 10, dpi = 300, bg = "white")
+
+
+#SWE Plot für den Subsetzeitraum 
+#Cavglia
+options(repr.plot.width = 100, repr.plot.height = 6) 
+plot_cav_SWE_sub <- ggplot(datacavaglia[datacavaglia$date >= as.Date("1992-01-01") & datacavaglia$date <= as.Date("2022-08-31"),],
+       aes(x = date, y = SWE)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "5 year", date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("SWE [mm]") +
+  labs(title = "SWE in Cavaglia") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+#Alp Grüm
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+plot_gruem_SWE_sub <- ggplot(datagruem[datagruem$date >= as.Date("1992-01-01") & datagruem$date <= as.Date("2022-08-31"),],
+       aes(x = date, y = SWE)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "5 year", date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("SWE [mm]") +
+  labs(title = "SWE auf der Alp Grüm") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+plot_gruem_SWE_1996 <- ggplot(datagruem[datagruem$date >= as.Date("1992-11-01") & datagruem$date <= as.Date("1996-10-31"),],
+       aes(x = date, y = SWE)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "3 month", date_labels = "%m") +
+  xlab("Zeit") +
+  ylab("SWE [mm]") +
+  labs(title = "SWE auf der Alp Grüm 1992 - 1996") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+
+#Robbia
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+plot_robbia_SWE_sub <- ggplot(datarobbia[datarobbia$date >= as.Date("1992-01-01") & datarobbia$date <= as.Date("2022-08-31"),],
+       aes(x = date, y = SWE)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "5 year", date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("SWE [mm]") + 
+  labs(title = "SWE in Robbia") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+#lech
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+plot_lech_SWE_sub <- ggplot(datalech[datalech$date >= as.Date("1992-01-01") & datalech$date <= as.Date("2022-08-31"),],
+       aes(x = date, y = SWE)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "5 year", date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("SWE [mm]") + 
+  labs(title = "SWE in Lech") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+#Zug
+
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+plot_zug_SWE_sub <- ggplot(datazug[datazug$date >= as.Date("1992-01-01") & datazug$date <= as.Date("2022-08-31"),],
+       aes(x = date, y = SWE)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "5 year", date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("SWE [mm]") + 
+  labs(title = "SWE in Zug") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+#Zürs
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+plot_zuers_SWE_sub <- ggplot(datazuers[datazuers$date >= as.Date("1992-01-01") & datazuers$date <= as.Date("2022-08-31"),],
+       aes(x = date, y = SWE)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "5 year", date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("SWE [mm]") + 
+  labs(title = "SWE in Zürs") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+#Trins
+
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+plot_trins_SWE_sub <- ggplot(datatrins[datatrins$date >= as.Date("1992-01-01") & datatrins$date <= as.Date("2022-08-31"),],
+       aes(x = date, y = SWE)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "5 year", date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("SWE [mm]") + 
+  labs(title = "SWE in Trins") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+
+#Gschnitz
+
+
+
+options(repr.plot.width = 100, repr.plot.height = 6) 
+plot_gsch_SWE_sub <- ggplot(datagschnitz[datagschnitz$date >= as.Date("1992-01-01") & datagschnitz$date <= as.Date("2022-08-31"),],
+       aes(x = date, y = SWE)) +
+  geom_line(color = "steelblue", linewidth= 0.7) +
+  scale_x_date(date_breaks = "5 year", date_labels = "%Y") +
+  xlab("Zeit") +
+  ylab("SWE [mm]") + 
+  labs(title = "SWE in Gschnitz") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+
+plot_SWE_sub <- (plot_cav_SWE_sub + plot_gruem_SWE_sub + plot_robbia_SWE_sub + plot_lech_SWE_sub + plot_zuers_SWE_sub + plot_zug_SWE_sub + plot_trins_SWE_sub + plot_gsch_SWE_sub) + plot_layout(ncol = 2) + plot_annotation (title = "SWE-Zeitreihen aller Stationen von 1992 - 2022", theme = theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5 )))
+
+
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/SWE_subset.png", plot = plot_SWE_sub, width = 14, height = 10, dpi = 300, bg = "white")
+```
+
+```{r Graphische Darstellung der Dekaden des SWE}
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+#Cavaglia
+datacavaglia_dekade <- datacavaglia %>%
+  mutate(
+    Jahr = year(date),
+    Tag = yday(date),
+    Tag_umkod = ifelse(Tag < 200, Tag + 365, Tag ),
+    Dekade = paste0(floor(Jahr / 10) * 10, "er")
+  ) %>%
+  group_by(Dekade, Tag_umkod) %>%
+  summarise(
+    SWE_mean = mean(SWE, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+plot_cav_SWE_dek <- ggplot(datacavaglia_dekade,
+       aes(x = Tag_umkod, y = SWE_mean,
+           color = Dekade,
+           group = Dekade)) +
+  geom_line(linewidth = 1) +
+    scale_x_continuous(breaks = c(200, 250, 300, 350, 400, 450, 500, 550), labels = c(200, 250, 300, 350, 34, 84, 134, 184)) + 
+  xlab("Tag im Jahr") +
+  ylab("SWE in mm") +
+  labs(title = "SWE in Cavaglia") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5))
+
+datacavaglia_kp <- datacavaglia %>%
+  mutate(
+  Jahr = year(date),
+  Tag = yday(date),
+  Tag_umkod = ifelse(Tag < 200, Tag + 365, Tag),
+  start = floor((Jahr - 1945) / 30) * 30 + 1945,
+  ende = start + 29,
+  kp = paste0(start, "-", ende)
+) %>%
+  group_by(kp, Tag_umkod) %>%
+  summarise(
+    SWE_mean = mean(SWE, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+plot_cav_SWE_kp <- ggplot(datacavaglia_kp,
+       aes(x = Tag_umkod, y = SWE_mean,
+           color = kp,
+           group = kp)) +
+  geom_line(linewidth = 1) +
+    scale_x_continuous(breaks = c(200, 250, 300, 350, 400, 450, 500, 550), labels = c(200, 250, 300, 350, 34, 84, 134, 184)) + 
+  xlab("Tag im Jahr") +
+  ylab("SWE [mm]") +
+  scale_color_discrete(name = "Zeitraum") +
+  labs(title = "SWE in Cavaglia") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5))
+
+# Alp Grüm 
+
+datagruem_dekade <- datagruem %>%
+  mutate(
+    Jahr = year(date),
+    Tag = yday(date),
+        Tag_umkod = ifelse(Tag < 200, Tag + 365, Tag ),
+    Dekade = paste0(floor(Jahr / 10) * 10, "er")
+  ) %>%
+  group_by(Dekade, Tag_umkod) %>%
+  summarise(
+    SWE_mean = mean(SWE, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+plot_gruem_SWE_dek <- ggplot(datagruem_dekade,
+       aes(x = Tag_umkod, y = SWE_mean,
+           color = Dekade,
+           group = Dekade)) +
+  geom_line(linewidth = 1) +    
+  scale_x_continuous(breaks = c(200, 250, 300, 350, 400, 450, 500, 550), labels = c(200, 250, 300, 350, 34, 84, 134, 184)) + 
+  xlab("Tag im Jahr") +
+  ylab("SWE in mm") +
+  labs(title = "SWE auf der Alp Grüm") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+datagruem_kp <- datagruem %>%
+  mutate(
+    Jahr = year(date),
+    Tag = yday(date),
+        Tag_umkod = ifelse(Tag < 200, Tag + 365, Tag ),
+   start = floor((Jahr - 1953) / 30) * 30 + 1953,
+  ende = start + 29,
+  kp = paste0(start, "-", ende)
+) %>%
+  group_by(kp, Tag_umkod) %>%
+  summarise(
+    SWE_mean = mean(SWE, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+plot_gruem_SWE_kp <- ggplot(datagruem_kp,
+       aes(x = Tag_umkod, y = SWE_mean,
+           color = kp,
+           group = kp)) +
+  geom_line(linewidth = 1) +    
+  scale_x_continuous(breaks = c(200, 250, 300, 350, 400, 450, 500, 550), labels = c(200, 250, 300, 350, 34, 84, 134, 184)) + 
+  xlab("Tag im Jahr") +
+  ylab("SWE in mm") +
+  labs(title = "SWE auf der Alp Grüm") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+#Robbia
+
+datarobbia_dekade <- datarobbia %>%
+  mutate(
+    Jahr = year(date),
+    Tag = yday(date),
+    Tag_umkod = ifelse(Tag < 200, Tag + 365, Tag ),
+    Dekade = paste0(floor(Jahr / 10) * 10, "er")) %>%
+  group_by(Dekade, Tag_umkod) %>%
+  summarise(
+    SWE_mean = mean(SWE, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+plot_robbia_SWE_dek <- ggplot(datarobbia_dekade,
+       aes(x = Tag_umkod, y = SWE_mean,
+           color = Dekade,
+           group = Dekade)) +
+  geom_line(linewidth = 1) +
+    scale_x_continuous(breaks = c(200, 250, 300, 350, 400, 450, 500, 550), labels = c(200, 250, 300, 350, 34, 84, 134, 184)) + 
+  xlab("Tag im Jahr") +
+  ylab("SWE in mm") +
+  labs(title = "SWE in Robbia") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+datarobbia_kp <- datarobbia %>%
+  mutate(
+    Jahr = year(date),
+    Tag = yday(date),
+    Tag_umkod = ifelse(Tag < 200, Tag + 365, Tag ),
+    start = floor((Jahr - 1960) / 30) * 30 + 1960,
+  ende = start + 29,
+  kp = paste0(start, "-", ende)
+)%>%
+  group_by(kp, Tag_umkod) %>%
+  summarise(
+    SWE_mean = mean(SWE, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+plot_robbia_SWE_kp <- ggplot(datarobbia_kp,
+       aes(x = Tag_umkod, y = SWE_mean,
+           color = kp,
+           group = kp)) +
+  geom_line(linewidth = 1) +
+    scale_x_continuous(breaks = c(200, 250, 300, 350, 400, 450, 500, 550), labels = c(200, 250, 300, 350, 34, 84, 134, 184)) + 
+  xlab("Tag im Jahr") +
+  ylab("SWE in mm") +
+  labs(title = "SWE in Robbia") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+#Lech
+datalech_dekade <- datalech %>%
+  mutate(
+    Jahr = year(date),
+    Tag = yday(date),
+    Tag_umkod = ifelse(Tag < 200, Tag + 365, Tag ),
+    Dekade = paste0(floor(Jahr / 10) * 10, "er")
+  ) %>%
+  group_by(Dekade, Tag_umkod) %>%
+  summarise(
+    SWE_mean = mean(SWE, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+
+plot_lech_SWE_dek <- ggplot(datalech_dekade,
+       aes(x = Tag_umkod, y = SWE_mean,
+           color = Dekade,
+           group = Dekade)) +
+  geom_line(linewidth = 1) +
+  scale_x_continuous(breaks = c(200, 250, 300, 350, 400, 450, 500, 550), labels = c(200, 250, 300, 350, 34, 84, 134, 184)) + 
+  xlab("Tag im Jahr") +
+  ylab("SWE in mm") +
+  labs(title = "SWE in Lech") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+datalech_kp <- datalech %>%
+  mutate(
+    Jahr = year(date),
+    Tag = yday(date),
+    Tag_umkod = ifelse(Tag < 200, Tag + 365, Tag ),
+     start = floor((Jahr - 1970) / 30) * 30 + 1970,
+  ende = start + 29,
+  kp = paste0(start, "-", ende)
+) %>%
+  group_by(kp, Tag_umkod) %>%
+  summarise(
+    SWE_mean = mean(SWE, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+
+plot_lech_SWE_kp <- ggplot(datalech_kp,
+       aes(x = Tag_umkod, y = SWE_mean,
+           color = kp,
+           group = kp)) +
+  geom_line(linewidth = 1) +
+  scale_x_continuous(breaks = c(200, 250, 300, 350, 400, 450, 500, 550), labels = c(200, 250, 300, 350, 34, 84, 134, 184)) + 
+  xlab("Tag im Jahr") +
+  ylab("SWE in mm") +
+  labs(title = "SWE in Lech") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+#Zug
+
+datazug_dekade <- datazug %>%
+  mutate(
+    Jahr = year(date),
+    Tag = yday(date),
+         Tag_umkod = ifelse(Tag < 200, Tag + 365, Tag ),
+    Dekade = paste0(floor(Jahr / 10) * 10, "er")
+  ) %>%
+  group_by(Dekade, Tag_umkod) %>%
+  summarise(
+    SWE_mean = mean(SWE, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+plot_zug_SWE_dek <- ggplot(datazug_dekade,
+       aes(x = Tag_umkod, y = SWE_mean,
+           color = Dekade,
+           group = Dekade)) +
+  geom_line(linewidth = 1) +
+  scale_x_continuous(breaks = c(200, 250, 300, 350, 400, 450, 500, 550), labels = c(200, 250, 300, 350, 34, 84, 134, 184)) + 
+  xlab("Tag im Jahr") +
+  ylab("SWE in mm") +
+  labs(title = "SWE in Zug") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+#Zürs
+
+datazuers_dekade <- datazuers %>%
+  mutate(
+    Jahr = year(date),
+    Tag = yday(date),
+     Tag_umkod = ifelse(Tag < 200, Tag + 365, Tag ),
+    Dekade = paste0(floor(Jahr / 10) * 10, "er")
+  ) %>%
+  group_by(Dekade, Tag_umkod) %>%
+  summarise(
+    SWE_mean = mean(SWE, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+plot_zuers_SWE_dek <- ggplot(datazuers_dekade,
+       aes(x = Tag_umkod, y = SWE_mean,
+           color = Dekade,
+           group = Dekade)) +
+  geom_line(linewidth = 1) +
+     scale_x_continuous(breaks = c(200, 250, 300, 350, 400, 450, 500, 550), labels = c(200, 250, 300, 350, 34, 84, 134, 184)) + 
+  xlab("Tag im Jahr") +
+  ylab("SWE in mm") +
+  labs(title = "SWE in Zürs") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+datazuers_kp <- datazuers %>%
+  mutate(
+    Jahr = year(date),
+    Tag = yday(date),
+     Tag_umkod = ifelse(Tag < 200, Tag + 365, Tag ),
+     start = floor((Jahr - 1970) / 30) * 30 + 1970,
+  ende = start + 29,
+  kp = paste0(start, "-", ende)
+) %>%
+  group_by(kp, Tag_umkod) %>%
+  summarise(
+    SWE_mean = mean(SWE, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+plot_zuers_SWE_kp <- ggplot(datazuers_kp,
+       aes(x = Tag_umkod, y = SWE_mean,
+           color = kp,
+           group = kp)) +
+  geom_line(linewidth = 1) +
+     scale_x_continuous(breaks = c(200, 250, 300, 350, 400, 450, 500, 550), labels = c(200, 250, 300, 350, 34, 84, 134, 184)) + 
+  xlab("Tag im Jahr") +
+  ylab("SWE in mm") +
+  labs(title = "SWE in Zürs") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+#Trins
+
+datatrins_dekade <- datatrins %>%
+  mutate(
+    Jahr = year(date),
+    Tag = yday(date),
+    Tag_umkod = ifelse(Tag < 200, Tag + 365, Tag ),
+    Dekade = paste0(floor(Jahr / 10) * 10, "er")
+  ) %>%
+  group_by(Dekade, Tag_umkod) %>%
+  summarise(
+    SWE_mean = mean(SWE, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+plot_trins_SWE_dek <- ggplot(datatrins_dekade,
+       aes(x = Tag_umkod, y = SWE_mean,
+           color = Dekade,
+           group = Dekade)) +
+  geom_line(linewidth = 1) +
+    scale_x_continuous(breaks = c(200, 250, 300, 350, 400, 450, 500, 550), labels = c(200, 250, 300, 350, 34, 84, 134, 184)) + 
+  xlab("Tag im Jahr") +
+  ylab("SWE in mm") +
+  labs(title = "SWE in Trins") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+
+datatrins_kp <- datatrins %>%
+  mutate(
+    Jahr = year(date),
+    Tag = yday(date),
+    Tag_umkod = ifelse(Tag < 200, Tag + 365, Tag ),
+     start = floor((Jahr - 1970) / 30) * 30 + 1970,
+  ende = start + 29,
+  kp = paste0(start, "-", ende)
+) %>%
+  group_by(kp, Tag_umkod) %>%
+  summarise(
+    SWE_mean = mean(SWE, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+plot_trins_SWE_kp <- ggplot(datatrins_kp,
+       aes(x = Tag_umkod, y = SWE_mean,
+           color = kp,
+           group = kp)) +
+  geom_line(linewidth = 1) +
+    scale_x_continuous(breaks = c(200, 250, 300, 350, 400, 450, 500, 550), labels = c(200, 250, 300, 350, 34, 84, 134, 184)) + 
+  xlab("Tag im Jahr") +
+  ylab("SWE in mm") +
+  labs(title = "SWE in Trins") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+
+#Gschnitz
+
+datagsch_dekade <- datagschnitz %>%
+  mutate(
+    Jahr = year(date),
+    Tag = yday(date),
+    Tag_umkod = ifelse(Tag < 200, Tag + 366, Tag),
+    Dekade = paste0(floor(Jahr / 10) * 10, "er")
+  ) %>%
+  group_by(Dekade, Tag_umkod) %>%
+  summarise(
+    SWE_mean = mean(SWE, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+plot_gsch_SWE_dek <- ggplot(datagsch_dekade,
+       aes(x = Tag_umkod, y = SWE_mean,
+           color = Dekade,
+           group = Dekade)) +
+  geom_line(linewidth = 1) + 
+  scale_x_continuous(breaks = c(200, 250, 300, 350, 400, 450, 500, 550), labels = c(200, 250, 300, 350, 34, 84, 134, 184)) + 
+  xlab("Tag im Jahr") +
+  ylab("SWE in mm") +
+  labs(title = "SWE in Gschnitz") +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+library(patchwork)
+library(ggplot2)
+
+plot_SWE_dekade <- (plot_cav_SWE_dek + plot_gruem_SWE_dek + plot_robbia_SWE_dek + plot_lech_SWE_dek + plot_zuers_SWE_dek + plot_zug_SWE_dek + plot_trins_SWE_dek + plot_gsch_SWE_dek) + plot_layout(ncol = 2) + plot_annotation (title = "SWE der Stationen", subtitle = "Gemittelt auf den Tag der jeweiligen Dekade", theme = theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5 ), plot.subtitle = element_text(size = 14, face = "bold")))
+
+
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/SWE_dekade.png", plot = plot_SWE_dekade, width = 14, height = 10, dpi = 300, bg = "white")
+
+plot_SWE_kp <- (plot_cav_SWE_kp + plot_gruem_SWE_kp + plot_robbia_SWE_kp + plot_lech_SWE_kp + plot_zuers_SWE_kp + plot_trins_SWE_kp) + plot_layout(ncol = 2) + plot_annotation (title = "SWE der Stationen", subtitle = "Gemittelt auf den Tag der jeweiligen 30 Jahr Periode", theme = theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5 ), plot.subtitle = element_text(size = 14, face = "bold")))
+
+
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/SWE_kp.png", plot = plot_SWE_kp, width = 14, height = 10, dpi = 300, bg = "white")
+
+```
+
+```{r Graphische Darstellung der Nullwert für den subsset und den gesamten Zeitraum für die Schneehöhe, Winter und Frühling}
+
+print(ss_zr_cav) #ns
+print(ss_zr_gruem)  #ns
+print(ss_zr_rob )#s
+print(ss_zr_lech)#s
+print(ss_zr_zuers)  #s
+print(ss_zr_zug) #ns
+print(ss_zr_trins)  #s
+print(ss_zr_gsch) #ns
+
+print(ss_zr_cav_s_ges)#ns
+print(ss_zr_gruem_s_ges) #ns
+print(ss_zr_rob_s_ges) #s
+print(ss_zr_lech_s_ges) #ns
+print(ss_zr_zuers_s_ges) #s
+print(ss_zr_zug_s_ges) #ns
+print(ss_zr_trins_s_ges)#s
+print(ss_zr_gsch_s_ges) #ns
+
+print(ss_zr_cav_w_ges) #s
+print(ss_zr_gruem_w_ges) #s
+print(ss_zr_rob_w_ges) #s
+print(ss_zr_lech_w_ges) #s
+print(ss_zr_zuers_w_ges) #ns
+print(ss_zr_zug_w_ges) #ns
+print(ss_zr_trins_w_ges) #ns
+print(ss_zr_gsch_w_ges) #ns
+
+print(ss_zr_cav_sub) #ns
+print(ss_zr_gruem_sub)  #ns
+print(ss_zr_rob_sub )#ns
+print(ss_zr_lech_sub)#s
+print(ss_zr_zuers_sub) #ns 
+print(ss_zr_zug_sub) #ns
+print(ss_zr_trins_sub)  #ns
+print(ss_zr_gsch_sub) #ns
+
+print(ss_zr_cav_s_sub)#ns
+print(ss_zr_gruem_s_sub) #ns
+print(ss_zr_rob_s_sub) #s
+print(ss_zr_lech_s_sub) #ns
+print(ss_zr_zuers_s_sub) #ns
+print(ss_zr_zug_s_sub) #ns
+print(ss_zr_trins_s_sub)#s
+print(ss_zr_gsch_s_sub) #ns
+
+print(ss_zr_cav_w_sub) #ns
+print(ss_zr_gruem_w_sub) #ns
+print(ss_zr_rob_w_sub) #ns
+print(ss_zr_lech_w_sub) #ns
+print(ss_zr_zuers_w_sub) #ns
+print(ss_zr_zug_w_sub) #ns
+print(ss_zr_trins_w_sub) #ns
+print(ss_zr_gsch_w_sub) #ns
+
+#Tabelle
+
+zr_hs_table <- data.frame(Fluss = c("Cavaglia","Alp Grüm", "Robbia", "Lech", "Zuers", "Zug", "Trins","Gschnitz"),
+                                 
+Schneeperiode = c(NA, NA, ss_zr_rob$estimates, ss_zr_lech$estimates, ss_zr_zuers$estimates, NA, ss_zr_trins$estimates, NA),
+
+Fruehling = c(NA, NA, ss_zr_rob_s_ges$estimates, NA, ss_zr_zuers_s_ges$estimates, NA, ss_zr_trins_s_ges$estimates, NA),
+
+Winter = c(ss_zr_cav_w_ges$estimates, ss_zr_gruem_w_ges$estimates, ss_zr_rob_w_ges$estimates, ss_zr_lech_w_ges$estimates, NA, NA, NA, NA),
+
+Schneeperiode_sub = c(NA, NA, NA, ss_zr_lech_sub$estimates, NA, NA, NA, NA),
+                            
+Fruehling_sub = c(NA, NA, ss_zr_rob_s_sub$estimates, NA, NA, NA, ss_zr_trins_s_sub$estimates, NA),
+                            
+Winter_sub = c(NA, NA, NA, NA, NA, NA, NA, NA))
+
+library(gt)
+
+gt(zr_hs_table) |>
+  tab_header(title = "Sen Slope Schätzer der Nullwerte der Schneehöhe für den gesamten Beobachtungszeitraum und den Subsetzeitraum")|> 
+  cols_label(Fluss = "Station", Schneeperiode ="Schneeperiode", Fruehling = "Frühling", Winter = "Winter", Schneeperiode_sub = "Schneeperiode_sub",  Fruehling_sub = "Frühling_sub", Winter_sub = "Winter_sub")
+
+#plots
+library(ggplot2)
+
+#Gesamter Zeitraum
+
+#Robbia
+
+y_wert <- median(zero_ratio_robbia$hs, na.rm = TRUE) -
+            ss_zr_rob$estimates * median(zero_ratio_robbia$h_year, na.rm = TRUE)
+
+
+plot_zr_robbia_ges <- ggplot(zero_ratio_robbia,
+       aes(x = h_year, y = hs)) +
+  geom_col(fill = "grey70") +  geom_abline(
+    slope = ss_zr_rob$estimates,
+    intercept = y_wert,
+    colour = "red",
+    linewidth = 0.8
+  ) +
+  labs(
+    title = "Nullwerte in Robbia",
+    x = "Jahr",
+    y = "Anzahl der Nullwerte",
+    color = "Jahr"
+  ) +
+  annotate(
+  "text",
+  x = 1978,
+  y = max(zero_ratio_robbia$hs +4, na.rm = TRUE),
+  label = paste0(
+    "Trend pro Zeiteinheit: ",
+    round(ss_zr_rob$estimates, 3),
+    " Tage"
+  )
+) +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+
+#Lech
+
+y_wert <- median(zero_ratio_lech$hs, na.rm = TRUE) -
+            ss_zr_lech$estimates * median(zero_ratio_lech$h_year, na.rm = TRUE)
+
+
+plot_zr_lech_ges <- ggplot(zero_ratio_lech,
+       aes(x = h_year, y = hs)) +
+  geom_col(fill = "grey70") +  geom_abline(
+    slope = ss_zr_lech$estimates,
+    intercept = y_wert,
+    colour = "red",
+    linewidth = 0.8
+  ) +
+  labs(
+    title = "Nullwerte in Lech",
+    x = "Jahr",
+    y = "Anzahl der Nullwerte",
+    color = "Jahr"
+  ) +
+  annotate(
+  "text",
+  x = 1981,
+  y = max(zero_ratio_lech$hs +2, na.rm = TRUE),
+  label = paste0(
+    "Trend pro Zeiteinheit: ",
+    round(ss_zr_lech$estimates, 3),
+    " Tage"
+  )
+) +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+#Zürs 
+
+y_wert <- median(zero_ratio_zuers$hs, na.rm = TRUE) -
+            ss_zr_zuers$estimates * median(zero_ratio_zuers$h_year, na.rm = TRUE)
+
+
+plot_zr_zuers_ges <- ggplot(zero_ratio_zuers,
+       aes(x = h_year, y = hs)) +
+  geom_col(fill = "grey70") +  geom_abline(
+    slope = ss_zr_zuers$estimates,
+    intercept = y_wert,
+    colour = "red",
+    linewidth = 0.8
+  ) +
+  labs(
+    title = "Nullwerte in Zürs",
+    x = "Jahr",
+    y = "Anzahl der Nullwerte",
+    color = "Jahr"
+  ) +
+  annotate(
+  "text",
+  x = 1981,
+  y = max(zero_ratio_zuers$hs, na.rm = TRUE),
+  label = paste0(
+    "Trend pro Zeiteinheit: ",
+    round(ss_zr_zuers$estimates, 3),
+    " Tage"
+  )
+) +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+#Trins 
+
+y_wert <- median(zero_ratio_trins$hs, na.rm = TRUE) -
+            ss_zr_trins$estimates * median(zero_ratio_trins$h_year, na.rm = TRUE)
+
+
+plot_zr_trins_ges <- ggplot(zero_ratio_trins,
+       aes(x = h_year, y = hs)) +
+  geom_col(fill = "grey70") +  geom_abline(
+    slope = ss_zr_trins$estimates,
+    intercept = y_wert,
+    colour = "red",
+    linewidth = 0.8
+  ) +
+  labs(
+    title = "Nullwerte in Trins",
+    x = "Jahr",
+    y = "Anzahl der Nullwerte",
+    color = "Jahr"
+  ) +
+  annotate(
+  "text",
+  x = 1981,
+  y = max(zero_ratio_trins$hs +6, na.rm = TRUE),
+  label = paste0(
+    "Trend pro Zeiteinheit: ",
+    round(ss_zr_trins$estimates, 3),
+    " Tage"
+  )
+) +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+library(patchwork)
+
+plot_zr_ges <- (plot_zr_robbia_ges + plot_zr_lech_ges + plot_zr_zuers_ges + plot_zr_trins_ges) + plot_layout(ncol = 2) + plot_annotation (title = "Nullwertezeitreihen aller signifikanten Stationen", subtitle = "In der Schneeperiode im Beobachtungszeitraum", theme = theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5 ), plot.subtitle = element_text(size = 14, face = "bold")))
+
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/zr_ges.png", plot = plot_zr_ges, width = 14, height = 10, dpi = 300, bg = "white")
+
+#Frühling
+
+#Robbia
+
+library(ggplot2)
+
+y_wert <- median(zero_ratio_robbia_s_ges$hs, na.rm = TRUE) -
+            ss_zr_rob_s_ges$estimates * median(zero_ratio_robbia_s_ges$h_year, na.rm = TRUE)
+
+
+plot_zr_robbia_ges_s <- ggplot(zero_ratio_robbia_s_ges,
+       aes(x = h_year, y = hs)) +
+  geom_col(fill = "grey70") +  geom_abline(
+    slope = ss_zr_rob_s_ges$estimates,
+    intercept = y_wert,
+    colour = "red",
+    linewidth = 0.8
+  ) +
+  labs(
+    title = "Nullwerte in Robbia",
+    x = "Jahr",
+    y = "Anzahl der Nullwerte",
+    color = "Jahr"
+  ) +
+  
+  annotate(
+  "text",
+  x = 1978,
+  y = max(zero_ratio_robbia_s_ges$hs +4, na.rm = TRUE),
+  label = paste0(
+    "Trend pro Zeiteinheit: ",
+    round(ss_zr_rob_s_ges$estimates, 3),
+    " Tage"
+  )
+) +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+#Zürs 
+
+y_wert <- median(zero_ratio_zuers_s_ges$hs, na.rm = TRUE) -
+            ss_zr_zuers_s_ges$estimates * median(zero_ratio_zuers_s_ges$h_year, na.rm = TRUE)
+
+
+plot_zr_zuers_ges_s <- ggplot(zero_ratio_zuers_s_ges,
+       aes(x = h_year, y = hs)) +
+  geom_col(fill = "grey70") +  geom_abline(
+    slope = ss_zr_zuers_s_ges$estimates,
+    intercept = y_wert,
+    colour = "red",
+    linewidth = 0.8
+  ) +
+  labs(
+    title = "Nullwerte in Zürs",
+    x = "Jahr",
+    y = "Anzahl der Nullwerte",
+    color = "Jahr"
+  ) +
+  annotate(
+  "text",
+  x = 1981,
+  y = max(zero_ratio_zuers_s_ges$hs, na.rm = TRUE),
+  label = paste0(
+    "Trend pro Zeiteinheit: ",
+    round(ss_zr_lech_s_ges$estimates, 3),
+    " Tage"
+  )
+) +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+#Trins 
+
+y_wert <- median(zero_ratio_trins_s_ges$hs, na.rm = TRUE) -
+            ss_zr_trins_s_ges$estimates * median(zero_ratio_trins_s_ges$h_year, na.rm = TRUE)
+
+
+plot_zr_trins_ges_s <- ggplot(zero_ratio_trins_s_ges,
+       aes(x = h_year, y = hs)) +
+  geom_col(fill = "grey70") +  geom_abline(
+    slope = ss_zr_trins_s_ges$estimates,
+    intercept = y_wert,
+    colour = "red",
+    linewidth = 0.8
+  ) +
+  labs(
+    title = "Nullwerte in Trins",
+    x = "Jahr",
+    y = "Anzahl der Nullwerte",
+    color = "Jahr"
+  ) +
+  annotate(
+  "text",
+  x = 1981,
+  y = max(zero_ratio_trins_s_ges$hs, na.rm = TRUE),
+  label = paste0(
+    "Trend pro Zeiteinheit: ",
+    round(ss_zr_trins_s_ges$estimates, 3),
+    " Tage"
+  )
+) +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+library(patchwork)
+library(ggplot2)
+
+plot_zr_ges_s <- (plot_zr_robbia_ges_s + plot_zr_zuers_ges_s + plot_zr_trins_ges_s) + plot_layout(ncol = 2) + plot_annotation (title = "Nullertezeitreihen aller signifikanten Stationen", subtitle = "Im Frühling im Beobachtungszeitraum", theme = theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5 ), plot.subtitle = element_text(size = 14, face = "bold")))
+
+
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/zr_s.png", plot = plot_zr_ges_s, width = 14, height = 10, dpi = 300, bg = "white")
+
+
+#winter
+
+#Cavaglia
+
+
+  
+
+y_wert <- median(zero_ratio_cavaglia_w_ges$hs, na.rm = TRUE) -
+            ss_zr_cav_w_ges$estimates * median(zero_ratio_cavaglia_w_ges$hyear, na.rm = TRUE)
+
+
+plot_zr_cavaglia_ges_w <- ggplot(zero_ratio_cavaglia_w_ges,
+       aes(x = hyear, y = hs)) +
+  geom_col(fill = "grey70") +  geom_abline(
+    slope = ss_zr_cav_w_ges$estimates,
+    intercept = y_wert,
+    colour = "red",
+    linewidth = 0.8
+  ) +
+  labs(
+    title = "Nullwerte in Cavaglia",
+    x = "Jahr",
+    y = "Anzahl der Nullwerte",
+    color = "Jahr"
+  ) +
+  annotate(
+  "text",
+  x = 1973,
+  y = max(zero_ratio_cavaglia_w_ges$hs, na.rm = TRUE),
+  label = paste0(
+    "Trend pro Zeiteinheit: ",
+    round(ss_zr_cav_w_ges$estimates, 3),
+    " Tage"
+  )
+) +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+#Alp Grüm
+y_wert <- median(zero_ratio_gruem_w_ges$hs, na.rm = TRUE) -
+            ss_zr_gruem_w_ges$estimates * median(zero_ratio_gruem_w_ges$hyear, na.rm = TRUE)
+
+
+plot_zr_gruem_ges_w <- ggplot(zero_ratio_gruem_w_ges,
+       aes(x = hyear, y = hs)) +
+  geom_col(fill = "grey70") +  geom_abline(
+    slope = ss_zr_gruem_w_ges$estimates,
+    intercept = y_wert,
+    colour = "red",
+    linewidth = 0.8
+  ) +
+  labs(
+    title = "Nullwerte auf der Alp Grüm",
+    x = "Jahr",
+    y = "Anzahl der Nullwerte",
+    color = "Jahr"
+  ) +
+  annotate(
+  "text",
+  x = 1977,
+  y = max(zero_ratio_gruem_w_ges$hs, na.rm = TRUE),
+  label = paste0(
+    "Trend pro Zeiteinheit: ",
+    round(ss_zr_gruem_w_ges$estimates, 3),
+    " Tage"
+  )
+) +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+#Robbia
+
+y_wert <- median(zero_ratio_robbia_w_ges$hs, na.rm = TRUE) -
+            ss_zr_rob_w_ges$estimates * median(zero_ratio_robbia_w_ges$h_year, na.rm = TRUE)
+
+
+plot_zr_robbia_ges_w <- ggplot(zero_ratio_robbia_w_ges,
+       aes(x = h_year, y = hs)) +
+  geom_col(fill = "grey70") +  geom_abline(
+    slope = ss_zr_rob_w_ges$estimates,
+    intercept = y_wert,
+    colour = "red",
+    linewidth = 0.8
+  ) +
+  labs(
+    title = "Nullwerte in Robbia",
+    x = "Jahr",
+    y = "Anzahl der Nullwerte",
+    color = "Jahr"
+  ) +
+  
+  annotate(
+  "text",
+  x = 1977,
+  y = max(zero_ratio_robbia_w_ges$hs +4, na.rm = TRUE),
+  label = paste0(
+    "Trend pro Zeiteinheit: ",
+    round(ss_zr_rob_w_ges$estimates, 3),
+    " Tage"
+  )
+) +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+#Lech
+
+y_wert <- median(zero_ratio_lech_w_ges$hs, na.rm = TRUE) -
+            ss_zr_lech_w_ges$estimates * median(zero_ratio_lech_w_ges$h_year, na.rm = TRUE)
+
+
+plot_zr_lech_ges_w <- ggplot(zero_ratio_lech_w_ges,
+       aes(x = h_year, y = hs)) +
+  geom_col(fill = "grey70") +  geom_abline(
+    slope = ss_zr_lech_w_ges$estimates,
+    intercept = y_wert,
+    colour = "red",
+    linewidth = 0.8
+  ) +
+  labs(
+    title = "Nullwerte in Lech",
+    x = "Jahr",
+    y = "Anzahl der Nullwerte",
+    color = "Jahr"
+  ) +
+   annotate(
+  "text",
+  x = 1987,
+  y = max(zero_ratio_lech_w_ges$hs, na.rm = TRUE),
+  label = paste0(
+    "Trend pro Zeiteinheit: ",
+    round(ss_zr_lech_w_ges$estimates, 3),
+    " Tage"
+  )
+) +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+library(patchwork)
+plot_zr_ges_w <- (plot_zr_cavaglia_ges_w + plot_zr_gruem_ges_w + plot_zr_robbia_ges_w + plot_zr_lech_ges_w) + plot_layout(ncol = 2) + plot_annotation (title = "Nullwertezeitreihen aller signifikanten Stationen", subtitle = "Im Winter für den Beobachtungszeitraum", theme = theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5 ), plot.subtitle = element_text(size = 14, face = "bold")))
+
+
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/zr_w.png", plot = plot_zr_ges_w, width = 14, height = 10, dpi = 300, bg = "white")
+
+#Subsetzeitraum
+
+#Lech
+y_wert <- median(zero_ratio_lech_sub$hs, na.rm = TRUE) -
+            ss_zr_lech_sub$estimates * median(zero_ratio_lech_sub$h_year, na.rm = TRUE)
+
+
+plot_zr_lech_sub <- ggplot(zero_ratio_lech_sub,
+       aes(x = h_year, y = hs)) +
+  geom_col(fill = "grey70") +  geom_abline(
+    slope = ss_zr_lech_sub$estimates,
+    intercept = y_wert,
+    colour = "red",
+    linewidth = 0.8
+  ) +
+  labs(
+    title = "Nullwerte in Lech",
+    subtitle = "In der Schneeperiode im Vergleichszeitraum (1992 - 2022)",
+    x = "Jahr",
+    y = "Anzahl der Nullwerte",
+    color = "Jahr"
+  ) +
+  annotate(
+  "text",
+  x = 1995,
+  y = max(zero_ratio_lech_sub$hs, na.rm = TRUE),
+  label = paste0(
+    "Trend pro Zeiteinheit: ",
+    round(ss_zr_lech_sub$estimates, 3),
+    " Tage"
+  )
+) +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold"), plot.subtitle = element_text(size = 14, face = "bold")
+  )
+
+
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/lech_zr_sub.png", plot = plot_zr_lech_sub, width = 14, height = 10, dpi = 300, bg = "white")
+
+#Frühling
+
+
+#Robbia
+
+y_wert <- median(zero_ratio_robbia_s_sub$hs, na.rm = TRUE) -
+            ss_zr_rob_s_sub$estimates * median(zero_ratio_robbia_s_sub$h_year, na.rm = TRUE)
+
+
+plot_zr_robbia_sub_s <- ggplot(zero_ratio_robbia_s_sub,
+       aes(x = h_year, y = hs)) +
+  geom_col(fill = "grey70") +  geom_abline(
+    slope = ss_zr_rob_s_sub$estimates,
+    intercept = y_wert,
+    colour = "red",
+    linewidth = 0.8
+  ) +
+  labs(
+    title = "Nullwerte in Robbia im Frühling",
+    x = "Jahr",
+    y = "Anzahl der Nullwerte",
+    color = "Jahr"
+  ) +
+  annotate(
+  "text",
+  x = 2000,
+  y = max(zero_ratio_robbia_s_sub$hs +6, na.rm = TRUE),
+  label = paste0(
+    "Trend pro Zeiteinheit: ",
+    round(ss_zr_rob_s_sub$estimates, 3),
+    " Tage"
+  )
+) +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+
+#Trins 
+
+y_wert <- median(zero_ratio_trins_s_sub$hs, na.rm = TRUE) -
+            ss_zr_trins_s_sub$estimates * median(zero_ratio_trins_s_sub$h_year, na.rm = TRUE)
+
+
+plot_zr_trins_sub_s <- ggplot(zero_ratio_trins_s_sub,
+       aes(x = h_year, y = hs)) +
+  geom_col(fill = "grey70") +  geom_abline(
+    slope = ss_zr_trins_s_sub$estimates,
+    intercept = y_wert,
+    colour = "red",
+    linewidth = 0.8
+  ) +
+  labs(
+    title = "Nullwerte in Trins im Frühjahr",
+    x = "Jahr",
+    y = "Anzahl der Nullwerte",
+    color = "Jahr"
+  ) +
+  annotate(
+  "text",
+  x = 1998,
+  y = max(zero_ratio_trins_s_sub$hs, na.rm = TRUE),
+  label = paste0(
+    "Trend pro Zeiteinheit: ",
+    round(ss_zr_trins_s_sub$estimates, 3),
+    " Tage"
+  )
+) +
+  theme_minimal(base_size = 14) +                 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+
+library(patchwork)
+plot_zr_sub_s <- (plot_zr_robbia_sub_s + plot_zr_trins_sub_s ) + plot_layout(ncol = 2) + plot_annotation (title = "Nullwertezeitreihen aller signifikanten Stationen", subtitle = "Im Frühjahr im Vergleichszeitraum (1992 - 2022)", theme = theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5 ), plot.subtitle = element_text(size = 14, face = "bold")))
+
+
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/zr_s_sub.png", plot = plot_zr_sub_s, width = 14, height = 10, dpi = 300, bg = "white")
+```
+
+```{r Graphische Darstellung die Intensität und die Nullwerte des SWE für den subset und den gesamten Zeitraum, Winter und Frühling}
+ss_cav_in_SWE_1 <- ss_cav_in_SWE$estimates *242
+ss_gruem_in_SWE_1 <- ss_gruem_in_SWE$estimates *242
+ss_rob_in_SWE_1 <- ss_rob_in_SWE$estimates*242
+ss_lech_in_SWE_1 <- ss_lech_in_SWE$estimates*242
+ss_zuers_in_SWE_1 <- ss_zuers_in_SWE$estimates*242
+ss_zug_in_SWE_1 <- ss_zug_in_SWE$estimates *242
+ss_trins_in_SWE_1 <- ss_trins_in_SWE$estimates*242
+ss_gsch_in_SWE_1 <- ss_gsch_in_SWE$estimates*242
+
+ss_cav_in_SWE_1_s_ges <- ss_cav_in_SWE_s_ges$estimates*122
+ss_gruem_in_SWE_1_s_ges <- ss_gruem_in_SWE_s_ges$estimates*122
+ss_rob_in_SWE_1_s_ges <- ss_rob_in_SWE_s_ges$estimates*122
+ss_lech_in_SWE_1_s_ges <- ss_lech_in_SWE_s_ges$estimates*122
+ss_zuers_in_SWE_1_s_ges <- ss_zuers_in_SWE_s_ges$estimates*122
+ss_zug_in_SWE_1_s_ges <- ss_zug_in_SWE_s_ges$estimates*122
+ss_trins_in_SWE_1_s_ges <- ss_trins_in_SWE_s_ges$estimates*122
+ss_gsch_in_SWE_1_s_ges <- ss_gsch_in_SWE_s_ges$estimates*122
+
+ss_cav_in_SWE_1_w_ges <- ss_cav_in_SWE_w_ges$estimates*120
+ss_gruem_in_SWE_1_w_ges <- ss_gruem_in_SWE_w_ges$estimates*120
+ss_rob_in_SWE_1_w_ges <- ss_rob_in_SWE_w_ges$estimates*120
+ss_lech_in_SWE_1_w_ges <- ss_lech_in_SWE_w_ges$estimates*120
+ss_zuers_in_SWE_1_w_ges <- ss_zuers_in_SWE_w_ges$estimates*120
+ss_zug_in_SWE_1_w_ges <- ss_zug_in_SWE_w_ges$estimates*120
+ss_trins_in_SWE_1_w_ges <- ss_trins_in_SWE_w_ges$estimates*120
+ss_gsch_in_SWE_1_w_ges <- ss_gsch_in_SWE_w_ges$estimates*120
+
+ss_cav_in_SWE_1_sub <- ss_cav_in_SWE_sub$estimates *242
+ss_gruem_in_SWE_1_sub <- ss_gruem_in_SWE_sub$estimates *242
+ss_rob_in_SWE_1_sub <- ss_rob_in_SWE_sub$estimates*242
+ss_lech_in_SWE_1_sub <- ss_lech_in_SWE_sub$estimates*242
+ss_zuers_in_SWE_1_sub <- ss_zuers_in_SWE_sub$estimates*242
+ss_zug_in_SWE_1_sub <- ss_zug_in_SWE_sub$estimates *242
+ss_trins_in_SWE_1_sub <- ss_trins_in_SWE_sub$estimates*242
+ss_gsch_in_SWE_1_sub <- ss_gsch_in_SWE_sub$estimates*242
+
+ss_cav_in_SWE_1_s_sub <- ss_cav_in_SWE_s_sub$estimates*122
+ss_gruem_in_SWE_1_s_sub <- ss_gruem_in_SWE_s_sub$estimates*122
+ss_rob_in_SWE_1_s_sub <- ss_rob_in_SWE_s_sub$estimates*122
+ss_lech_in_SWE_1_s_sub <- ss_lech_in_SWE_s_sub$estimates*122
+ss_zuers_in_SWE_1_s_sub <- ss_zuers_in_SWE_s_sub$estimates*122
+ss_zug_in_SWE_1_s_sub <- ss_zug_in_SWE_s_sub$estimates*122
+ss_trins_in_SWE_1_s_sub <- ss_trins_in_SWE_s_sub$estimates*122
+ss_gsch_in_SWE_1_s_sub <- ss_gsch_in_SWE_s_sub$estimates*122
+
+ss_cav_in_SWE_1_w_sub <- ss_cav_in_SWE_w_sub$estimates*120
+ss_gruem_in_SWE_1_w_sub <- ss_gruem_in_SWE_w_sub$estimates*120
+ss_rob_in_SWE_1_w_sub <- ss_rob_in_SWE_w_sub$estimates*120
+ss_lech_in_SWE_1_w_sub <- ss_lech_in_SWE_w_sub$estimates*120
+ss_zuers_in_SWE_1_w_sub <- ss_zuers_in_SWE_w_sub$estimates*120
+ss_zug_in_SWE_1_w_sub <- ss_zug_in_SWE_w_sub$estimates*120
+ss_trins_in_SWE_1_w_sub <- ss_trins_in_SWE_w_sub$estimates*120
+ss_gsch_in_SWE_1_w_sub <- ss_gsch_in_SWE_w_sub$estimates*120
+
+
+print(ss_zr_cav_SWE) #ns
+print(ss_zr_gruem_SWE) #ns
+print(ss_zr_rob_SWE)#s
+print(ss_zr_lech_SWE)#s
+print(ss_zr_zuers_SWE)#s
+print(ss_zr_zug_SWE)#ns
+print(ss_zr_trins_SWE)#s
+print(ss_zr_gsch_SWE)#ns
+
+print(ss_zr_cav_SWE_s_ges)#ns
+print(ss_zr_gruem_SWE_s_ges)#ns
+print(ss_zr_rob_SWE_s_ges)#s
+print(ss_zr_lech_SWE_s_ges)#ns
+print(ss_zr_zuers_SWE_s_ges)#s
+print(ss_zr_zug_SWE_s_ges)#ns
+print(ss_zr_trins_SWE_s_ges)#s
+print(ss_zr_gsch_SWE_s_ges)#ns
+
+print(ss_zr_cav_SWE_w_ges)#s
+print(ss_zr_gruem_SWE_w_ges)#s
+print(ss_zr_rob_SWE_w_ges)#s
+print(ss_zr_lech_SWE_w_ges)#s
+print(ss_zr_zuers_SWE_w_ges)#ns
+print(ss_zr_zug_SWE_w_ges)#ns
+print(ss_zr_trins_SWE_w_ges)#ns
+print(ss_zr_gsch_SWE_w_ges)#ns
+
+print(ss_zr_cav_SWE_sub) #ns
+print(ss_zr_gruem_SWE_sub)  #ns
+print(ss_zr_rob_SWE_sub)#ns
+print(ss_zr_lech_SWE_sub)#s
+print(ss_zr_zuers_SWE_sub)#ns
+print(ss_zr_zug_SWE_sub)#ns
+print(ss_zr_trins_SWE_sub)#ns
+print(ss_zr_gsch_SWE_sub)#ns
+
+print(ss_zr_cav_SWE_s_sub)#ns
+print(ss_zr_gruem_SWE_s_sub) #ns
+print(ss_zr_rob_SWE_s_sub)#s
+print(ss_zr_lech_SWE_s_sub)#ns
+print(ss_zr_zuers_SWE_s_sub)#ns
+print(ss_zr_zug_SWE_s_sub)#ns
+print(ss_zr_trins_SWE_s_sub)#s
+print(ss_zr_gsch_SWE_s_sub)#ns
+
+print(ss_zr_cav_SWE_w_sub)#ns
+print(ss_zr_gruem_SWE_w_sub)#ns
+print(ss_zr_rob_SWE_w_sub)#ns
+print(ss_zr_lech_SWE_w_sub)#ns
+print(ss_zr_zuers_SWE_w_sub)#ns
+print(ss_zr_zug_SWE_w_sub)#ns
+print(ss_zr_trins_SWE_w_sub)#ns
+print(ss_zr_gsch_SWE_w_sub)#ns
+
+
+
+
+#Tabellen
+
+in_SWE_table <- data.frame(Fluss = c("Cavaglia","Alp Grüm", "Robbia", "Lech", "Zuers", "Zug", "Trins","Gschnitz"),
+                                 
+Schneeperiode = c(ss_cav_in_SWE_1 %>% round(3) , ss_gruem_in_SWE_1 %>% round(3), ss_rob_in_SWE_1 %>% round(3), NA, ss_zuers_in_SWE_1 %>% round(3), ss_zug_in_SWE_1 %>% round(3), ss_trins_in_SWE_1 %>% round(3), ss_gsch_in_SWE_1 %>% round(3)),
+
+Fruehling = c(ss_cav_in_SWE_1_s_ges %>% round(3), ss_gruem_in_SWE_1_s_ges %>% round(3), ss_rob_in_SWE_1_s_ges %>% round(3), NA, ss_zuers_in_SWE_1_s_ges %>% round(3), NA, ss_trins_in_SWE_1_s_ges %>% round(3), ss_gsch_in_SWE_1_s_ges %>% round(3)),
+
+Winter = c(ss_cav_in_SWE_1_w_ges %>% round(3), ss_gruem_in_SWE_1_w_ges %>% round(3), ss_rob_in_SWE_1_w_ges %>% round(3), NA, ss_zuers_in_SWE_1_w_ges %>% round(3), ss_zug_in_SWE_1_w_ges %>% round(3), ss_trins_in_SWE_1_w_ges %>% round(3), ss_gsch_in_SWE_1_w_ges %>% round(3)),
+
+Schneeperiode_sub = c(NA, NA, ss_rob_in_SWE_1_sub %>% round(3), ss_lech_in_SWE_1_sub %>% round(3), NA, ss_zug_in_SWE_1_sub %>% round(3), ss_trins_in_SWE_1_sub %>% round(3), ss_gsch_in_SWE_1_sub %>% round(3)),
+                            
+Fruehling_sub = c(NA, ss_gruem_in_SWE_1_s_sub %>% round(3), NA, NA, ss_zuers_in_SWE_1_s_sub %>% round(3), NA, NA, ss_gsch_in_SWE_1_s_ges %>% round(3)),
+                            
+Winter_sub = c(ss_cav_in_SWE_1_w_sub %>% round(3), ss_gruem_in_SWE_1_w_sub %>% round(3), NA, ss_lech_in_SWE_1_w_sub %>% round(3), NA, ss_zug_in_SWE_1_w_sub %>% round(3), ss_trins_in_SWE_1_w_sub %>% round(3), ss_gsch_in_SWE_1_w_sub %>% round(3)))
+
+library(gt)
+
+in_table_SWE <- gt(in_SWE_table) |>
+  tab_header(title = "Sen's Slope Schätzer der Intensität des SWEs für den gesamten Beobachtungszeitraum und im Vergleichszeitraum")|> 
+  cols_label(Fluss = "Station", Schneeperiode ="Schneeperiode", Fruehling = "Frühling", Winter = "Winter", Schneeperiode_sub = "Schneeperiode_sub",  Fruehling_sub = "Frühling_sub", Winter_sub = "Winter_sub")
+
+gtsave(in_table_SWE,
+  "C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/in_table_SWE.png")
+
+
+
+zr_SWE_table <- data.frame(Fluss = c("Cavaglia","Alp Grüm", "Robbia", "Lech", "Zuers", "Zug", "Trins","Gschnitz"),
+                                 
+Schneeperiode = c(NA, NA, ss_zr_rob_SWE$estimates, ss_zr_lech_SWE$estimates, ss_zr_zuers_SWE$estimates, NA, ss_zr_trins_SWE$estimates, NA),
+
+Fruehling = c(NA, NA, ss_zr_rob_SWE_s_ges$estimates, NA, ss_zr_zuers_SWE_s_ges$estimates, NA, ss_zr_trins_SWE_s_ges$estimates, NA),
+
+Winter = c(ss_zr_cav_SWE_w_ges$estimates, ss_zr_gruem_SWE_w_ges$estimates, ss_zr_rob_SWE_w_ges$estimates, ss_zr_lech_w_ges$estimates, NA, NA, NA, NA),
+
+Schneeperiode_sub = c(NA, NA, NA, ss_zr_lech_SWE_sub$estimates, NA, NA, NA, NA),
+                            
+Fruehling_sub = c(NA, NA, ss_zr_rob_s_sub$estimates, NA, NA, NA, ss_zr_trins_s_sub$estimates, NA),
+                            
+Winter_sub = c(NA, NA, NA, NA, NA, NA, NA, NA))
+
+library(gt)
+
+gt(zr_SWE_table) |>
+  tab_header(title = "Sen's Slope Schätzer der Nullwerte des SWEs für den gesamten Beobachtungszeitraum und den Subsetzeitraum")|> 
+  cols_label(Fluss = "Station", Schneeperiode ="Schneeperiode", Fruehling = "Frühling", Winter = "Winter", Schneeperiode_sub = "Schneeperiode_sub",  Fruehling_sub = "Frühling_sub", Winter_sub = "Winter_sub")
+
+#Intensitäts plots (Beispiele der Stärksten)
+
+#Gesamter Zeitraum
+library(dplyr)
+library(lubridate)
+
+robbia_in_SWE_s_ges <- robbia_in_SWE_s_ges %>%
+  mutate(
+    Jahr = year(date),
+    Tag = yday(date)
+  )
+
+y_wert <- median(robbia_in_SWE_s_ges$SWE, na.rm = TRUE) -
+             ss_rob_in_SWE_s_ges$estimates * median(robbia_in_SWE_s_ges$Tag, na.rm = TRUE)
+
+ggplot(robbia_in_SWE_s_ges,
+       aes(x = Tag , y = SWE,
+           group = Jahr)) +
+  geom_line(colour = "grey") +  geom_abline(
+    slope = ss_rob_in_SWE_s_ges$estimates,
+    intercept = y_wert,
+    colour = "red",
+    linewidth = 1.2
+  ) +
+  labs(
+    title = "SWE in Robbia im Frühling",
+    x = "Tag des Jahres",
+    y = "SWE in mm",
+    color = "Jahr"
+  ) +
+  annotate(
+  "text",
+  x = 100,
+  y = max(robbia_in_SWE_s_ges$SWE, na.rm = TRUE),
+  label = paste0(
+    "Trend über den gesamten Frühling pro Jahr: ",
+    round(ss_rob_in_SWE_1_s_ges, 3),
+    " mm"
+  )
+) +
+  theme_minimal()
+
+#Gschnitz
+
+gsch_in_SWE_s_ges <- gsch_in_SWE_s_ges %>%
+  mutate(
+    Jahr = year(date),
+    Tag = yday(date)
+  )
+
+y_wert <- median(gsch_in_SWE_s_ges$SWE, na.rm = TRUE) -
+             ss_gsch_in_SWE_s_ges$estimates * median(gsch_in_SWE_s_ges$Tag, na.rm = TRUE)
+
+ggplot(gsch_in_SWE_s_ges,
+       aes(x = Tag, y = SWE,
+           group = Jahr)) +
+  geom_line(colour = "grey") +  geom_abline(
+    slope = ss_gsch_in_SWE_s_ges$estimates,
+    intercept = y_wert,
+    colour = "red",
+    linewidth = 1.2
+  ) +
+  labs(
+    title = "SWE in Gschnitz im Frühling",
+    x = "Tag des Jahres",
+    y = "SWE in mm",
+    color = "Jahr"
+  ) +
+  theme_minimal()
+
+```
+
+```{r Graphische monatliche Sen Slope für den Abfluss}
+sen_Q_leprese_november_ges <- sen_Q_leprese_november_ges$estimates * 31
+sen_Q_Lech_november_ges <- sen_Q_Lech_november_ges$estimates *31
+sen_Q_Gschnitzbach_november_ges <- sen_Q_Gschnitzbach_november_ges$estimates * 31
+
+sen_Q_leprese_dezember_ges <- sen_Q_leprese_dezember_ges$estimates *30
+sen_Q_Lech_dezember_ges <- sen_Q_Lech_dezember_ges$estimates *30
+sen_Q_Gschnitzbach_dezember_ges <- sen_Q_Gschnitzbach_dezember_ges$estimates *30
+
+sen_Q_leprese_januar_ges <- sen_Q_leprese_januar_ges$estimates * 31
+sen_Q_Lech_januar_ges <- sen_Q_Lech_januar_ges$estimates *31
+sen_Q_Gschnitzbach_januar_ges <- sen_Q_Gschnitzbach_januar_ges$estimates *31
+
+
+sen_Q_leprese_februar_ges <- sen_Q_leprese_februar_ges$estimates *28
+sen_Q_Lech_februar_ges <- sen_Q_Lech_februar_ges$estimates *28
+sen_Q_Gschnitzbach_februar_ges<- sen_Q_Gschnitzbach_februar_ges$estimates *28
+
+sen_Q_leprese_maerz_ges <- sen_Q_leprese_maerz_ges$estimates *28
+sen_Q_Lech_maerz_ges <- sen_Q_Lech_maerz_ges$estimates *28
+sen_Q_Gschnitzbach_maerz_ges <- sen_Q_Gschnitzbach_maerz_ges$estimates *28
+
+sen_Q_leprese_april_ges <- sen_Q_leprese_april_ges$estimates * 30
+sen_Q_Lech_april_ges <- sen_Q_Lech_april_ges$estimates *30
+sen_Q_Gschnitzbach_april_ges <- sen_Q_Gschnitzbach_april_ges$estimates * 30
+
+sen_Q_leprese_mai_ges <- sen_Q_leprese_mai_ges$estimates *31
+sen_Q_Lech_mai_ges <- sen_Q_Lech_mai_ges$estimates *31
+sen_Q_Gschnitzbach_mai_ges <- sen_Q_Gschnitzbach_mai_ges$estimates *31
+
+sen_Q_leprese_juni_ges <- sen_Q_leprese_juni_ges$estimates *30
+sen_Q_Lech_juni_ges <- sen_Q_Lech_juni_ges$estimates *30
+sen_Q_Gschnitzbach_juni_ges <- sen_Q_Gschnitzbach_juni_ges$estimates *30
+
+sen_Q_leprese_november_sub <- sen_Q_leprese_november_sub$estimates * 31
+sen_Q_Lech_november_sub <- sen_Q_Lech_november_sub$estimates *31
+sen_Q_Gschnitzbach_november_sub <- sen_Q_Gschnitzbach_november_sub$estimates * 31
+
+sen_Q_leprese_dezember_sub <- sen_Q_leprese_dezember_sub$estimates *30
+sen_Q_Lech_dezember_sub <- sen_Q_Lech_dezember_sub$estimates *30
+sen_Q_Gschnitzbach_dezember_sub <- sen_Q_Gschnitzbach_dezember_sub$estimates *30
+
+sen_Q_leprese_januar_sub <- sen_Q_leprese_januar_sub$estimates * 31
+sen_Q_Lech_januar_sub <- sen_Q_Lech_januar_sub$estimates *31
+sen_Q_Gschnitzbach_januar_sub <- sen_Q_Gschnitzbach_januar_sub$estimates *31
+
+
+sen_Q_leprese_februar_sub <- sen_Q_leprese_februar_sub$estimates *28
+sen_Q_Lech_februar_sub <- sen_Q_Lech_februar_sub$estimates *28
+sen_Q_Gschnitzbach_februar_sub<- sen_Q_Gschnitzbach_februar_sub$estimates *28
+
+sen_Q_leprese_maerz_sub <- sen_Q_leprese_maerz_sub$estimates *28
+sen_Q_Lech_maerz_sub <- sen_Q_Lech_maerz_sub$estimates *28
+sen_Q_Gschnitzbach_maerz_sub <- sen_Q_Gschnitzbach_maerz_sub$estimates *28
+
+sen_Q_leprese_april_sub <- sen_Q_leprese_april_sub$estimates * 30
+sen_Q_Lech_april_sub <- sen_Q_Lech_april_sub$estimates *30
+sen_Q_Gschnitzbach_april_sub <- sen_Q_Gschnitzbach_april_sub$estimates * 30
+
+sen_Q_leprese_mai_sub <- sen_Q_leprese_mai_sub$estimates *31
+sen_Q_Lech_mai_sub <- sen_Q_Lech_mai_sub$estimates *31
+sen_Q_Gschnitzbach_mai_sub <- sen_Q_Gschnitzbach_mai_sub$estimates *31
+
+sen_Q_leprese_juni_sub <- sen_Q_leprese_juni_sub$estimates *30
+sen_Q_Lech_juni_sub <- sen_Q_Lech_juni_sub$estimates *30
+sen_Q_Gschnitzbach_juni_sub <- sen_Q_Gschnitzbach_juni_sub$estimates *30
+
+
+#Tabelle
+
+abfluss_table_monatlich <- data.frame(Fluss = c("Poschiavino","Lech", "Gschnitzbach"),
+                                    
+November = c(sen_Q_leprese_november_ges %>% round(3) ,sen_Q_Lech_november_ges %>% round(3), sen_Q_Gschnitzbach_november_ges %>% round(3)),
+
+Dezember = c(sen_Q_leprese_dezember_ges %>% round(3) ,NA, sen_Q_Gschnitzbach_dezember_ges %>% round(3)),
+
+Januar = c(sen_Q_leprese_januar_ges %>% round(3) ,NA, sen_Q_Gschnitzbach_januar_ges %>% round(3)),
+
+Februar = c(sen_Q_leprese_februar_ges %>% round(3) ,NA, sen_Q_Gschnitzbach_februar_ges %>% round(3)),
+                            
+Maerz = c(sen_Q_leprese_maerz_ges %>% round(3) ,sen_Q_Lech_maerz_ges %>% round(3), sen_Q_Gschnitzbach_maerz_ges %>% round(3)),
+                            
+April = c(sen_Q_leprese_april_ges %>% round(3), sen_Q_Lech_april_ges %>% round(3), sen_Q_Gschnitzbach_maerz_ges %>% round(3)),
+
+Mai = c(sen_Q_leprese_mai_ges %>% round(3), sen_Q_Lech_mai_ges %>% round(3), sen_Q_Gschnitzbach_mai_ges %>% round(3)), 
+
+Juni = c(sen_Q_leprese_juni_ges %>% round(3), sen_Q_Lech_juni_ges %>% round(3), NA),
+
+November_sub = c(NA ,sen_Q_Lech_november_sub %>% round(3), NA),
+
+Dezember_sub = c(sen_Q_leprese_dezember_sub %>% round(3) , NA, NA),
+
+Januar_sub = c(NA , NA, NA),
+
+Februar_sub = c(sen_Q_leprese_februar_sub %>% round(3) , NA, sen_Q_Gschnitzbach_februar_sub %>% round(3)),
+
+Maerz_sub = c(NA ,sen_Q_Lech_maerz_sub %>% round(3), sen_Q_Gschnitzbach_maerz_sub %>% round(3)),
+                            
+April_sub = c(sen_Q_leprese_april_sub %>% round(3), sen_Q_Lech_april_sub %>% round(3), sen_Q_Gschnitzbach_maerz_sub %>% round(3)),
+
+Mai_sub = c(sen_Q_leprese_mai_sub %>% round(3), NA, NA), 
+
+Juni_sub = c(sen_Q_leprese_juni_sub %>% round(3), NA, NA))
+
+library(gt)
+
+abfluss_table_monatlich <- gt(abfluss_table_monatlich) |>
+  tab_header(title = "Sen's Slope Schätzer für den Abfluss für den gesamten Beobachtungszeitraum und im Vergleichszeitraum in der monatliche Betrachtung")|> 
+  cols_label(Fluss = "Fluss", Dezember = "Dez.", November = "Nov.", Januar ="Jan.", Februar ="Feb.", Maerz = "Mär.", April = "Apr.", Mai = "Mai", Juni = "Jun.", November_sub = "Nov_sub", Dezember_sub = "Dez_sub", Januar_sub ="Jan_sub", Februar_sub ="Feb_sub", Maerz_sub = "Mär_sub", April_sub = "Apr_sub", Mai_sub = "Mai_sub", Juni_sub = "Juni_sub") |> tab_options(table.font.size = px(10))
+
+gtsave(data = abfluss_table_monatlich,
+  "C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/abfluss_table_monatlich.png")
+
+
+```
+
+```{r Graphische monatliche Darstellung für den und den Nullwertetest der Schneehöhe}
+print(ss_zr_cav_november_ges) #s
+print(ss_zr_gruem_november_ges) #s
+print(ss_zr_rob_november_ges) #s
+print(ss_zr_lech_november_ges) #ns
+print(ss_zr_zuers_november_ges) #ns
+print(ss_zr_zug_november_ges) #ns
+print(ss_zr_trins_november_ges) #ns
+print(ss_zr_gsch_november_ges) #ns
+
+print(ss_zr_cav_dezember_ges) #ns
+print(ss_zr_gruem_dezember_ges) #s
+print(ss_zr_rob_dezember_ges) #s
+print(ss_zr_lech_dezember_ges) #s
+print(ss_zr_zuers_dezember_ges) #ns
+print(ss_zr_zug_dezember_ges) #ns
+print(ss_zr_trins_dezember_ges) #ns
+print(ss_zr_gsch_dezember_ges) #s
+
+print(ss_zr_cav_januar_ges) #s
+print(ss_zr_gruem_januar_ges) #ns
+print(ss_zr_rob_januar_ges) #ns
+print(ss_zr_lech_januar_ges) #NA
+print(ss_zr_zuers_januar_ges) #NA
+print(ss_zr_zug_januar_ges) #NA
+print(ss_zr_trins_januar_ges) #ns
+print(ss_zr_gsch_januar_ges) #ns
+
+print(ss_zr_cav_februar_ges) #ns
+print(ss_zr_gruem_februar_ges) #s
+print(ss_zr_rob_februar_ges) #s
+print(ss_zr_lech_februar_ges) #NA
+print(ss_zr_zuers_februar_ges) #NA
+print(ss_zr_zug_februar_ges) #NA
+print(ss_zr_trins_februar_ges) #ns
+print(ss_zr_gsch_februar_ges) #NA
+
+print(ss_zr_cav_maerz_ges) #nicht signifikant
+print(ss_zr_gruem_maerz_ges) #nicht signifikant
+print(ss_zr_rob_maerz_ges) #signifikant
+print(ss_zr_lech_maerz_ges) #nicht signifikant
+print(ss_zr_zuers_maerz_ges) #NA
+print(ss_zr_zug_maerz_ges) #NA
+print(ss_zr_trins_maerz_ges) #nicht sig
+print(ss_zr_gsch_maerz_ges) #nicht sig
+
+print(ss_zr_cav_april_ges) #nicht sig
+print(ss_zr_gruem_april_ges) #sig
+print(ss_zr_rob_april_ges) #sig
+print(ss_zr_lech_april_ges)  #nicht sig
+print(ss_zr_zuers_april_ges) #nicht signif
+print(ss_zr_zug_april_ges)  #nicht sig
+print(ss_zr_trins_april_ges) #sig
+print(ss_zr_gsch_april_ges) #nicht sig
+
+print(ss_zr_cav_mai_ges) #nicht sig
+print(ss_zr_gruem_mai_ges) #nicht sig
+print(ss_zr_rob_mai_ges) #nicht sig
+print(ss_zr_lech_mai_ges) # nicht sig
+print(ss_zr_zuers_mai_ges) # sig
+print(ss_zr_zug_mai_ges)  #nicht sig
+print(ss_zr_trins_mai_ges)#sig
+print(ss_zr_gsch_mai_ges) #nicht sig
+
+print(ss_zr_cav_november_sub) #ns
+print(ss_zr_gruem_november_sub) #ns
+print(ss_zr_rob_november_sub) #ns
+print(ss_zr_lech_november_sub) #ns
+print(ss_zr_zuers_november_sub) #ns
+print(ss_zr_zug_november_sub) #ns
+print(ss_zr_trins_november_sub) #ns
+print(ss_zr_gsch_november_sub) #ns
+
+print(ss_zr_cav_dezember_sub) #ns
+print(ss_zr_gruem_dezember_sub) #ns
+print(ss_zr_rob_dezember_sub) #ns
+print(ss_zr_lech_dezember_sub) #ns
+print(ss_zr_zuers_dezember_sub) #ns
+print(ss_zr_zug_dezember_sub) #ns
+print(ss_zr_trins_dezember_sub) #ns
+print(ss_zr_gsch_dezember_sub) #s
+
+print(ss_zr_cav_januar_sub) #ns
+print(ss_zr_gruem_januar_sub) #ns
+print(ss_zr_rob_januar_sub) #s
+print(ss_zr_lech_januar_sub) #NA
+print(ss_zr_zuers_januar_sub) #NA
+print(ss_zr_zug_januar_sub) #NA
+print(ss_zr_trins_januar_sub) #ns
+print(ss_zr_gsch_januar_sub) #ns
+
+print(ss_zr_cav_februar_sub) #ns
+print(ss_zr_gruem_februar_sub) #ns
+print(ss_zr_rob_februar_sub) #ns
+print(ss_zr_lech_februar_sub) #NA
+print(ss_zr_zuers_februar_sub) #NA
+print(ss_zr_zug_februar_sub) #NA
+print(ss_zr_trins_februar_sub) #ns
+print(ss_zr_gsch_februar_sub) #NA
+
+print(ss_zr_cav_maerz_sub)#nicht sig
+print(ss_zr_gruem_maerz_sub)# nicht sig
+print(ss_zr_rob_maerz_sub) #nicht sig
+print(ss_zr_lech_maerz_sub) #NA
+print(ss_zr_zuers_maerz_sub)#NA
+print(ss_zr_zug_maerz_sub) #NA
+print(ss_zr_trins_maerz_sub) #nicht sig
+print(ss_zr_gsch_maerz_sub)#nicht sig
+
+
+print(ss_zr_cav_april_sub) #nicht sig
+print(ss_zr_gruem_april_sub) #nicht sig
+print(ss_zr_rob_april_sub) #nicht sig
+print(ss_zr_lech_april_sub)#nicht sig
+print(ss_zr_zuers_april_sub)  #nicht sig
+print(ss_zr_zug_april_sub)#nicht sig
+print(ss_zr_trins_april_sub) #sig
+print(ss_zr_gsch_april_sub) #nicht sig
+
+print(ss_zr_cav_mai_sub) #nicht sig
+print(ss_zr_gruem_mai_sub)  #sig
+print(ss_zr_rob_mai_sub) #nicht sig
+print(ss_zr_lech_mai_sub) #nicht sig
+print(ss_zr_zuers_mai_sub) #nicht sig
+print(ss_zr_zug_mai_sub)#nicht sig
+print(ss_zr_trins_mai_sub)# nicht sig
+print(ss_zr_gsch_mai_sub) #nicht sig
+
+
+#Tabelle
+
+hs_table_monatlich <- data.frame(Fluss = c("Cavaglia","Alp Grüm", "Robbia", "Lech", "Zuers", "Zug", "Trins","Gschnitz"),
+                                 
+November = c(ss_zr_cav_november_ges$estimates, ss_zr_gruem_november_ges$estimates, ss_zr_rob_november_ges$estimates, NA, NA, NA, NA, NA),
+
+Dezember = c(NA, ss_zr_gruem_dezember_ges$estimates, ss_zr_rob_dezember_ges$estimates, ss_zr_lech_dezember_ges$estimates, NA, NA, NA, ss_zr_gsch_dezember_ges$estimates),
+
+Januar = c(ss_zr_cav_januar_ges$estimates, NA, NA, NA, NA, NA, NA, NA),
+
+Februar = c(NA, ss_zr_gruem_februar_ges$estimates, ss_zr_rob_februar_ges$estimates, NA, NA, NA, NA, NA),
+                            
+Maerz = c(NA, NA, NA, NA, NA, NA, NA, NA),
+                            
+April = c(NA, ss_zr_gruem_april_ges$estimates, ss_zr_rob_april_ges$estimates, NA, NA, NA, ss_zr_trins_april_ges$estimates, NA),
+
+Mai = c(NA, NA, NA, NA, ss_zr_zuers_mai_ges$estimates, NA, ss_zr_trins_mai_ges$estimates, NA), 
+
+Juni = c(NA, NA, NA, NA, NA, NA, NA, NA),
+
+November_sub = c(NA, NA, NA, NA, NA, NA, NA, NA),
+
+Dezember_sub = c(NA, NA, NA, NA, NA, NA, NA, ss_zr_gsch_dezember_sub$estimates),
+
+Januar_sub = c(NA, NA, ss_zr_rob_januar_sub$estimates, NA, NA, NA, NA, NA),
+
+Februar_sub = c(NA, NA, NA, NA, NA, NA, NA, NA),
+
+Maerz_sub = c(NA, NA, NA, NA, NA, NA, NA, NA),
+                            
+April_sub = c(NA, NA, NA, NA, NA, NA, NA, NA),
+
+Mai_sub = c(NA, ss_zr_gruem_mai_ges$estimates, NA, NA, NA, NA, NA, NA), 
+
+Juni_sub = c(NA, NA, NA, NA, NA, NA, NA, NA))
+
+library(gt)
+
+gt(hs_table_monatlich) |>
+  tab_header(title = "Sen Slope Schätzer die Nulwerte für den gesamten Beobachtungszeitraum und den Subsetzeitraum in der monatliche Betrachtung")|> 
+  cols_label(Fluss = "Station", November ="November", Dezember = "Dezember", Januar = "Januar", Februar = "Februar",  Maerz = "März", April = "April", Mai = "Mai", Juni = "Juni", November_sub = "November_sub", Dezember_sub = "Dezember_sub", Januar_sub = "Januar_sub", Februar_sub = "Februar_sub", Maerz_sub = "März_sub", April_sub = "April_sub", Mai_sub = "Mai_sub", Juni_sub = "Juni_sub")
+
+```
+
+```{r Graphische monatliche Darstellung für das SWE mit Intensität und Nullwertetest}
+
+print(ss_zr_cav_SWE_november_ges) #s
+print(ss_zr_gruem_SWE_november_ges) #s
+print(ss_zr_rob_SWE_november_ges)#s
+print(ss_zr_lech_SWE_november_ges)#ns
+print(ss_zr_zuers_SWE_november_ges)#ns
+print(ss_zr_zug_SWE_november_ges)#ns
+print(ss_zr_trins_SWE_november_ges)#ns
+print(ss_zr_gsch_SWE_november_ges)#ns
+
+print(ss_zr_cav_SWE_dezember_ges) #ns
+print(ss_zr_gruem_SWE_dezember_ges) #s
+print(ss_zr_rob_SWE_dezember_ges)#s
+print(ss_zr_lech_SWE_dezember_ges)#s
+print(ss_zr_zuers_SWE_dezember_ges)#ns
+print(ss_zr_zug_SWE_dezember_ges)#ns
+print(ss_zr_trins_SWE_dezember_ges)#ns
+print(ss_zr_gsch_SWE_dezember_ges)#s
+
+print(ss_zr_cav_SWE_januar_ges) #s
+print(ss_zr_gruem_SWE_januar_ges) #ns
+print(ss_zr_rob_SWE_januar_ges)#ns
+print(ss_zr_lech_SWE_januar_ges)#NA
+print(ss_zr_zuers_SWE_januar_ges)#NA
+print(ss_zr_zug_SWE_januar_ges)#NA
+print(ss_zr_trins_SWE_januar_ges)#ns
+print(ss_zr_gsch_SWE_januar_ges)#ns
+
+print(ss_zr_cav_SWE_februar_ges) #ns
+print(ss_zr_gruem_SWE_februar_ges) #s
+print(ss_zr_rob_SWE_februar_ges)#s
+print(ss_zr_lech_SWE_februar_ges)#NA
+print(ss_zr_zuers_SWE_februar_ges)#NA
+print(ss_zr_zug_SWE_februar_ges)#NA
+print(ss_zr_trins_SWE_februar_ges)#ns
+print(ss_zr_gsch_SWE_februar_ges)#NA
+
+ss_cav_in_SWE_november_ges_1 <- ss_cav_in_SWE_november_ges$estimates *31
+ss_gruem_in_SWE_november_ges_1 <- ss_gruem_in_SWE_november_ges$estimates *31
+ss_rob_in_SWE_november_ges_1 <- ss_rob_in_SWE_november_ges$estimates*31
+ss_lech_in_SWE_november_ges_1 <- ss_lech_in_SWE_november_ges$estimates*31
+ss_zuers_in_SWE_november_ges_1 <- ss_zuers_in_SWE_november_ges$estimates*31
+ss_zug_in_SWE_november_ges_1 <- ss_zug_in_SWE_november_ges$estimates*31
+ss_trins_in_SWE_november_ges_1 <- ss_trins_in_SWE_november_ges$estimates*31
+ss_gsch_in_SWE_november_ges_1 <- ss_gsch_in_SWE_november_ges$estimates * 31
+
+ss_cav_in_SWE_dezember_ges_1 <- ss_cav_in_SWE_dezember_ges$estimates*30
+ss_gruem_in_SWE_dezember_ges_1 <- ss_gruem_in_SWE_dezember_ges$estimates*30
+ss_rob_in_SWE_dezember_ges_1 <- ss_rob_in_SWE_dezember_ges$estimates*30
+ss_lech_in_SWE_dezember_ges_1 <- ss_lech_in_SWE_dezember_ges$estimates*30
+ss_zuers_in_SWE_dezember_ges_1 <- ss_zuers_in_SWE_dezember_ges$estimates*30
+ss_zug_in_SWE_dezember_ges_1 <- ss_zug_in_SWE_dezember_ges$estimates*30
+ss_trins_in_SWE_dezember_ges_1 <- ss_trins_in_SWE_dezember_ges$estimates*30
+ss_gsch_in_SWE_dezember_ges_1 <- ss_gsch_in_SWE_dezember_ges$estimates*30
+
+ss_cav_in_SWE_januar_ges_1 <- ss_cav_in_SWE_januar_ges$estimates*31
+ss_gruem_in_SWE_januar_ges_1 <- ss_gruem_in_SWE_januar_ges$estimates*31
+ss_rob_in_SWE_januar_ges_1 <- ss_rob_in_SWE_januar_ges$estimates*31
+ss_lech_in_SWE_januar_ges_1 <- ss_lech_in_SWE_januar_ges$estimates*31
+ss_zuers_in_SWE_januar_ges_1 <- ss_zuers_in_SWE_januar_ges$estimates*31
+ss_zug_in_SWE_januar_ges_1 <- ss_zug_in_SWE_januar_ges$estimates*31
+ss_trins_in_SWE_januar_ges_1 <- ss_trins_in_SWE_januar_ges$estimates*31
+ss_gsch_in_SWE_januar_ges_1 <- ss_gsch_in_SWE_januar_ges$estimatess*31
+
+ss_cav_in_SWE_februar_ges_1 <- ss_cav_in_SWE_februar_ges$estimates*28
+ss_gruem_in_SWE_februar_ges_1 <- ss_gruem_in_SWE_februar_ges$estimates*28
+ss_rob_in_SWE_februar_ges_1 <- ss_rob_in_SWE_februar_ges$estimates*28
+ss_lech_in_SWE_februar_ges_1 <- ss_lech_in_SWE_februar_ges$estimates*28
+ss_zuers_in_SWE_februar_ges_1 <- ss_zuers_in_SWE_februar_ges$estimates*28
+ss_zug_in_SWE_februar_ges_1 <- ss_zug_in_SWE_februar_ges$estimates *28
+ss_trins_in_SWE_februar_ges_1 <- ss_trins_in_SWE_februar_ges$estimates*28
+ss_gsch_in_SWE_februar_ges_1 <- ss_gsch_in_SWE_februar_ges$estimates*28
+
+ss_cav_in_SWE_maerz_ges_1 <- ss_cav_in_SWE_maerz_ges$estimates*31
+ss_gruem_in_SWE_maerz_ges_1 <- ss_gruem_in_SWE_maerz_ges$estimates*31
+ss_rob_in_SWE_maerz_ges_1 <- ss_rob_in_SWE_maerz_ges$estimates*31
+ss_lech_in_SWE_maerz_ges_1 <- ss_lech_in_SWE_maerz_ges$estimates*31
+ss_zuers_in_SWE_maerz_ges_1 <- ss_zuers_in_SWE_maerz_ges$estimates*31
+ss_zug_in_SWE_maerz_ges_1 <- ss_zug_in_SWE_maerz_ges$estimates*31
+ss_trins_in_SWE_maerz_ges_1 <- ss_trins_in_SWE_maerz_ges$estimates*31
+ss_gsch_in_SWE_maerz_ges_1 <- ss_gsch_in_SWE_maerz_ges$estimates*31
+
+ss_cav_in_SWE_april_ges_1 <- ss_cav_in_SWE_april_ges$estimates*30
+ss_gruem_in_SWE_april_ges_1 <- ss_gruem_in_SWE_april_ges$estimates*30
+ss_rob_in_SWE_april_ges_1 <- ss_rob_in_SWE_april_ges$estimates*30
+ss_lech_in_SWE_april_ges_1 <- ss_lech_in_SWE_april_ges$estimates*30
+ss_zuers_in_SWE_april_ges_1 <- ss_zuers_in_SWE_april_ges$estimates*30
+ss_zug_in_SWE_april_ges_1 <- ss_zug_in_SWE_april_ges$estimates*30
+ss_trins_in_SWE_april_ges_1 <- ss_trins_in_SWE_april_ges$estimates*30
+ss_gsch_in_SWE_april_ges_1 <- ss_gsch_in_SWE_april_ges$estimates*30
+
+ss_cav_in_SWE_mai_ges_1<- ss_cav_in_SWE_mai_ges$estimates*31
+ss_gruem_in_SWE_mai_ges_1 <- ss_gruem_in_SWE_mai_ges$estimates*31
+ss_rob_in_SWE_mai_ges_1 <- ss_rob_in_SWE_mai_ges$estimates*31
+ss_lech_in_SWE_mai_ges_1 <- ss_lech_in_SWE_mai_ges$estimates*31
+ss_zuers_in_SWE_mai_ges_1 <- ss_zuers_in_SWE_mai_ges$estimates*31
+ss_zug_in_SWE_mai_ges_1 <- ss_zug_in_SWE_mai_ges$estimates*31
+ss_trins_in_SWE_mai_ges_1 <- ss_trins_in_SWE_mai_ges$estimates*31
+ss_gsch_in_SWE_mai_ges_1 <- ss_gsch_in_SWE_mai_ges$estimates*31
+
+print(ss_zr_cav_SWE_maerz_ges) #nicht sig
+print(ss_zr_gruem_SWE_maerz_ges) #nicht sig
+print(ss_zr_rob_SWE_maerz_ges)# sig
+print(ss_zr_lech_SWE_maerz_ges)#ns
+print(ss_zr_zuers_SWE_maerz_ges)#NA
+print(ss_zr_zug_SWE_maerz_ges)#NA
+print(ss_zr_trins_SWE_maerz_ges)#ns
+print(ss_zr_gsch_SWE_maerz_ges)#ns
+
+
+print(ss_zr_cav_SWE_april_ges)#ns
+print(ss_zr_gruem_SWE_april_ges)#s
+print(ss_zr_rob_SWE_april_ges)#s
+print(ss_zr_lech_SWE_april_ges)#ns
+print(ss_zr_zuers_SWE_april_ges)#ns
+print(ss_zr_zug_SWE_april_ges)#ns
+print(ss_zr_trins_SWE_april_ges)#s
+print(ss_zr_gsch_SWE_april_ges)#ns
+
+
+print(ss_zr_cav_SWE_mai_ges)#ns
+print(ss_zr_gruem_SWE_mai_ges)#ns
+print(ss_zr_rob_SWE_mai_ges)#ns
+print(ss_zr_lech_SWE_mai_ges)#ns
+print(ss_zr_zuers_SWE_mai_ges)#s
+print(ss_zr_zug_SWE_mai_ges)#ns
+print(ss_zr_trins_SWE_mai_ges)#s
+print(ss_zr_gsch_SWE_mai_ges)#ns
+
+print(ss_zr_cav_SWE_november_sub) #ns
+print(ss_zr_gruem_SWE_november_sub) #ns
+print(ss_zr_rob_SWE_november_sub)#ns
+print(ss_zr_lech_SWE_november_sub)#ns
+print(ss_zr_zuers_SWE_november_sub)#ns
+print(ss_zr_zug_SWE_november_sub)#ns
+print(ss_zr_trins_SWE_november_sub)#ns
+print(ss_zr_gsch_SWE_november_sub)#ns
+
+print(ss_zr_cav_SWE_dezember_sub) #ns
+print(ss_zr_gruem_SWE_dezember_sub) #ns
+print(ss_zr_rob_SWE_dezember_sub)#ns
+print(ss_zr_lech_SWE_dezember_sub)#ns
+print(ss_zr_zuers_SWE_dezember_sub)#ns
+print(ss_zr_zug_SWE_dezember_sub)#ns
+print(ss_zr_trins_SWE_dezember_sub)#ns
+print(ss_zr_gsch_SWE_dezember_sub)#s
+
+print(ss_zr_cav_SWE_januar_sub) #ns
+print(ss_zr_gruem_SWE_januar_sub) #ns
+print(ss_zr_rob_SWE_januar_sub)#s
+print(ss_zr_lech_SWE_januar_sub)#NA
+print(ss_zr_zuers_SWE_januar_sub)#NA
+print(ss_zr_zug_SWE_januar_sub)#NA
+print(ss_zr_trins_SWE_januar_sub)#ns
+print(ss_zr_gsch_SWE_januar_sub)#ns
+
+print(ss_zr_cav_SWE_februar_sub) #ns
+print(ss_zr_gruem_SWE_februar_sub) #ns
+print(ss_zr_rob_SWE_februar_sub)#ns
+print(ss_zr_lech_SWE_februar_sub)#NA
+print(ss_zr_zuers_SWE_februar_sub)#NA
+print(ss_zr_zug_SWE_februar_sub)#NA
+print(ss_zr_trins_SWE_februar_sub)#ns
+print(ss_zr_gsch_SWE_februar_sub)#NA
+
+
+print(ss_zr_cav_SWE_maerz_sub)#ns
+print(ss_zr_gruem_SWE_maerz_sub)#ns
+print(ss_zr_rob_SWE_maerz_sub)#ns
+print(ss_zr_lech_SWE_maerz_sub)#NA
+print(ss_zr_zuers_SWE_maerz_sub)#ns
+print(ss_zr_zug_SWE_maerz_sub)#NA
+print(ss_zr_trins_SWE_maerz_sub)#ns
+print(ss_zr_gsch_SWE_maerz_sub)#ns
+
+
+print(ss_zr_cav_SWE_april_sub)#ns
+print(ss_zr_gruem_SWE_april_sub)#ns
+print(ss_zr_rob_SWE_april_sub)#ns
+print(ss_zr_lech_SWE_april_sub)#ns
+print(ss_zr_zuers_SWE_april_sub)#ns
+print(ss_zr_zug_SWE_april_sub)#ns
+print(ss_zr_trins_SWE_april_sub)#s
+print(ss_zr_gsch_SWE_april_sub)#ns
+
+
+print(ss_zr_cav_SWE_mai_sub)#ns
+print(ss_zr_gruem_SWE_mai_sub)#s
+print(ss_zr_lech_SWE_mai_sub)#ns
+print(ss_zr_zuers_SWE_mai_sub)#ns
+print(ss_zr_zug_SWE_mai_sub)#ns
+print(ss_zr_trins_SWE_mai_sub)#ns
+print(ss_zr_gsch_SWE_mai_sub)#ns
+
+ss_cav_in_SWE_november_sub_1 <- ss_cav_in_SWE_november_sub$estimates *31
+ss_gruem_in_SWE_november_sub_1 <- ss_gruem_in_SWE_november_sub$estimates *31
+ss_rob_in_SWE_november_sub_1 <- ss_rob_in_SWE_november_sub$estimates*31
+ss_lech_in_SWE_november_sub_1 <- ss_lech_in_SWE_november_sub$estimates*31
+ss_zuers_in_SWE_november_sub_1 <- ss_zuers_in_SWE_november_sub$estimates*31
+ss_zug_in_SWE_november_sub_1 <- ss_zug_in_SWE_november_sub$estimates*31
+ss_trins_in_SWE_november_sub_1 <- ss_trins_in_SWE_november_sub$estimates*31
+ss_gsch_in_SWE_november_sub_1 <- ss_gsch_in_SWE_november_sub$estimates * 31
+
+ss_cav_in_SWE_dezember_sub_1 <- ss_cav_in_SWE_dezember_sub$estimates*30
+ss_gruem_in_SWE_dezember_sub_1 <- ss_gruem_in_SWE_dezember_sub$estimates*30
+ss_rob_in_SWE_dezember_sub_1 <- ss_rob_in_SWE_dezember_sub$estimates*30
+ss_lech_in_SWE_dezember_sub_1 <- ss_lech_in_SWE_dezember_sub$estimates*30
+ss_zuers_in_SWE_dezember_sub_1 <- ss_zuers_in_SWE_dezember_sub$estimates*30
+ss_zug_in_SWE_dezember_sub_1 <- ss_zug_in_SWE_dezember_sub$estimates*30
+ss_trins_in_SWE_dezember_sub_1 <- ss_trins_in_SWE_dezember_sub$estimates*30
+ss_gsch_in_SWE_dezember_sub_1 <- ss_gsch_in_SWE_dezember_sub$estimates*30
+
+ss_cav_in_SWE_januar_sub_1 <- ss_cav_in_SWE_januar_sub$estimates*31
+ss_gruem_in_SWE_januar_sub_1 <- ss_gruem_in_SWE_januar_sub$estimates*31
+ss_rob_in_SWE_januar_sub_1 <- ss_rob_in_SWE_januar_sub$estimates*31
+ss_lech_in_SWE_januar_sub_1 <- ss_lech_in_SWE_januar_sub$estimates*31
+ss_zuers_in_SWE_januar_sub_1 <- ss_zuers_in_SWE_januar_sub$estimates*31
+ss_zug_in_SWE_januar_sub_1 <- ss_zug_in_SWE_januar_sub$estimates*31
+ss_trins_in_SWE_januar_sub_1 <- ss_trins_in_SWE_januar_sub$estimates*31
+ss_gsch_in_SWE_januar_sub_1 <- ss_gsch_in_SWE_januar_sub$estimates*31
+
+ss_cav_in_SWE_februar_sub_1 <- ss_cav_in_SWE_februar_sub$estimates*28
+ss_gruem_in_SWE_februar_sub_1 <- ss_gruem_in_SWE_februar_sub$estimates*28
+ss_rob_in_SWE_februar_sub_1 <- ss_rob_in_SWE_februar_sub$estimates*28
+ss_lech_in_SWE_februar_sub_1 <- ss_lech_in_SWE_februar_sub$estimates*28
+ss_zuers_in_SWE_februar_sub_1 <- ss_zuers_in_SWE_februar_sub$estimates*28
+ss_zug_in_SWE_februar_sub_1 <- ss_zug_in_SWE_februar_sub$estimates *28
+ss_trins_in_SWE_februar_sub_1 <- ss_trins_in_SWE_februar_sub$estimates*28
+ss_gsch_in_SWE_februar_sub_1 <- ss_gsch_in_SWE_februar_sub$estimates*28
+
+ss_cav_in_SWE_maerz_sub_1 <- ss_cav_in_SWE_maerz_sub$estimates*31
+ss_gruem_in_SWE_maerz_sub_1 <- ss_gruem_in_SWE_maerz_sub$estimates*31
+ss_rob_in_SWE_maerz_sub_1 <- ss_rob_in_SWE_maerz_sub$estimates*31
+ss_lech_in_SWE_maerz_sub_1 <- ss_lech_in_SWE_maerz_sub$estimates*31
+ss_zuers_in_SWE_maerz_sub_1 <- ss_zuers_in_SWE_maerz_sub$estimates*31
+ss_zug_in_SWE_maerz_sub_1 <- ss_zug_in_SWE_maerz_sub$estimates*31
+ss_trins_in_SWE_maerz_sub_1 <- ss_trins_in_SWE_maerz_sub$estimates*31
+ss_gsch_in_SWE_maerz_sub_1 <- ss_gsch_in_SWE_maerz_sub$estimates*31
+
+ss_cav_in_SWE_april_sub_1 <- ss_cav_in_SWE_april_sub$estimates*30
+ss_gruem_in_SWE_april_sub_1 <- ss_gruem_in_SWE_april_sub$estimates*30
+ss_rob_in_SWE_april_sub_1 <- ss_rob_in_SWE_april_sub$estimates*30
+ss_lech_in_SWE_april_sub_1 <- ss_lech_in_SWE_april_sub$estimates*30
+ss_zuers_in_SWE_april_sub_1 <- ss_zuers_in_SWE_april_sub$estimates*30
+ss_zug_in_SWE_april_sub_1 <- ss_zug_in_SWE_april_sub$estimates*30
+ss_trins_in_SWE_april_sub_1 <- ss_trins_in_SWE_april_sub$estimates*30
+ss_gsch_in_SWE_april_sub_1 <- ss_gsch_in_SWE_april_sub$estimates*30
+
+ss_cav_in_SWE_mai_sub_1<- ss_cav_in_SWE_mai_sub$estimates*31
+ss_gruem_in_SWE_mai_sub_1 <- ss_gruem_in_SWE_mai_sub$estimates*31
+ss_lech_in_SWE_mai_sub_1 <- ss_lech_in_SWE_mai_sub$estimates*31
+ss_zuers_in_SWE_mai_sub_1 <- ss_zuers_in_SWE_mai_sub$estimates*31
+ss_zug_in_SWE_mai_sub_1 <- ss_zug_in_SWE_mai_sub$estimates*31
+ss_trins_in_SWE_mai_sub_1 <- ss_trins_in_SWE_mai_sub$estimates*31
+ss_gsch_in_SWE_mai_sub_1 <- ss_gsch_in_SWE_mai_sub$estimates*31
+
+
+
+#Tabellen 
+
+library(dplyr)
+library(terra)
+
+in_SWE_table_monatlich <- data.frame(Fluss = c("Cavaglia","Alp Grüm", "Robbia", "Lech", "Zuers", "Zug", "Trins","Gschnitz"),
+                                 
+November = c(ss_cav_in_SWE_november_ges_1 %>% round(3), ss_gruem_in_SWE_november_ges_1 %>% round(3), ss_rob_in_SWE_november_ges_1 %>% round(3), ss_lech_in_SWE_november_ges_1 %>% round(3), ss_zuers_in_SWE_november_ges_1 %>% round(3), NA, NA, NA),
+
+Dezember = c(ss_cav_in_SWE_dezember_ges_1 %>% round(3), ss_gruem_in_SWE_dezember_ges_1 %>% round(3), NA, ss_lech_in_SWE_dezember_ges_1 %>% round(3), ss_zuers_in_SWE_dezember_ges_1 %>% round(3), NA, ss_trins_in_SWE_dezember_ges_1 %>% round(3), NA),
+
+Januar = c(ss_cav_in_SWE_januar_ges_1 %>% round(3), ss_gruem_in_SWE_januar_ges_1 %>% round(3), ss_rob_in_SWE_januar_ges_1 %>% round(3), NA, ss_zuers_in_SWE_januar_ges_1 %>% round(3), ss_zug_in_SWE_januar_ges_1 %>% round(3), ss_trins_in_SWE_januar_ges_1 %>% round(3), NA),
+
+Februar = c(ss_cav_in_SWE_februar_ges_1 %>% round(3), ss_gruem_in_SWE_februar_ges_1 %>% round(3), ss_rob_in_SWE_februar_ges_1 %>% round(3), NA, ss_zuers_in_SWE_februar_ges_1 %>% round(3), ss_zug_in_SWE_februar_ges_1 %>% round(3), ss_trins_in_SWE_februar_ges_1 %>% round(3), ss_gsch_in_SWE_februar_ges_1 %>% round(3)),
+                            
+Maerz = c(ss_cav_in_SWE_maerz_ges_1 %>% round(3), ss_gruem_in_SWE_maerz_ges_1 %>% round(3), ss_rob_in_SWE_maerz_ges_1 %>% round(3), NA, ss_zuers_in_SWE_maerz_ges_1 %>% round(3), ss_zug_in_SWE_maerz_ges_1 %>% round(3), NA, ss_gsch_in_SWE_maerz_ges_1 %>% round(3)),
+                            
+April = c(ss_cav_in_SWE_april_ges_1 %>% round(3), ss_gruem_in_SWE_april_ges_1 %>% round(3), ss_rob_in_SWE_april_ges_1 %>% round(3), NA, ss_zuers_in_SWE_april_ges_1 %>% round(3), ss_zug_in_SWE_april_ges_1 %>% round(3), ss_trins_in_SWE_april_ges_1 %>% round(3), NA),
+
+Mai = c(ss_cav_in_SWE_mai_ges_1 %>% round(3), NA, NA, ss_lech_in_SWE_mai_ges_1 %>% round(3), ss_zuers_in_SWE_mai_ges_1 %>% round(3), ss_zug_in_SWE_mai_ges_1 %>% round(3), NA, NA), 
+
+Juni = c(NA, NA, NA, NA, NA, NA, NA, NA),
+
+November_sub = c(NA, ss_gruem_in_SWE_november_sub_1 %>% round(3), NA, ss_lech_in_SWE_november_sub_1 %>% round(3), ss_zuers_in_SWE_november_sub_1 %>% round(3), NA,  NA, NA),
+
+Dezember_sub = c(ss_cav_in_SWE_dezember_sub_1 %>% round(3), NA, ss_rob_in_SWE_dezember_sub_1 %>% round(3), NA, ss_zuers_in_SWE_dezember_sub_1 %>% round(3), NA, NA, NA),
+
+Januar_sub = c(ss_cav_in_SWE_januar_sub_1 %>% round(3), NA, NA, ss_lech_in_SWE_januar_sub_1 %>% round(3), NA, ss_zug_in_SWE_januar_sub_1 %>% round(3), NA, NA),
+
+Februar_sub = c(ss_cav_in_SWE_februar_sub_1 %>% round(3), ss_gruem_in_SWE_februar_sub_1 %>% round(3), ss_rob_in_SWE_februar_sub_1 %>% round(3), ss_lech_in_SWE_februar_sub_1 %>% round(3), ss_zuers_in_SWE_februar_sub_1 %>% round(3), ss_zug_in_SWE_februar_sub_1 %>% round(3), ss_trins_in_SWE_februar_sub_1 %>% round(3), ss_gsch_in_SWE_februar_sub_1 %>% round(3)),
+
+Maerz_sub = c(ss_cav_in_SWE_maerz_sub_1 %>% round(3), NA, NA, ss_lech_in_SWE_maerz_sub_1 %>% round(3), NA, ss_zug_in_SWE_maerz_sub_1 %>% round(3), NA, ss_gsch_in_SWE_maerz_sub_1 %>% round(3)),
+                            
+April_sub = c(ss_cav_in_SWE_april_sub_1 %>% round(3), ss_gruem_in_SWE_april_sub_1 %>% round(3), NA, ss_lech_in_SWE_april_sub_1 %>% round(3), ss_zuers_in_SWE_april_sub_1 %>% round(3), ss_zug_in_SWE_april_sub_1 %>% round(3), NA, NA),
+
+Mai_sub = c(ss_cav_in_SWE_mai_sub_1 %>% round(3), ss_gruem_in_SWE_mai_sub_1 %>% round(3), NA, ss_lech_in_SWE_mai_sub_1 %>% round(3), ss_zuers_in_SWE_mai_sub_1 %>% round(3), ss_zug_in_SWE_mai_sub_1 %>% round(3), NA, NA), 
+
+Juni_sub = c(NA, NA, NA, NA, NA, NA, NA, NA))
+
+library(gt)
+
+in_SWE_table_monatlich <- gt(in_SWE_table_monatlich) |>
+  tab_header(title = "Sen's Slope Schätzer der Intesität für das SWE für den gesamten Beobachtungszeitraum und im Vergleichszeitraum in der monatliche Betrachtung")|> 
+  cols_label(Fluss = "Station", November ="Nov.", Dezember = "Dez.", Januar = "Jan.", Februar = "Feb.",  Maerz = "Mär.", April = "Apr.", Mai = "Mai", Juni = "Jun.", November_sub = "Nov_sub", Dezember_sub = "Dez_sub", Januar_sub = "Jan_sub", Februar_sub = "Feb_sub", Maerz_sub = "Mär_sub", April_sub = "Apr_sub", Mai_sub = "Mai_sub", Juni_sub = "Jun_sub")|>
+tab_options(
+    table.font.size = px(10)
+)
+
+gtsave(in_SWE_table_monatlich,
+  "C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/in_SWE_table_monatlich.png"
+)
+
+zr_SWE_table_monatlich <- data.frame(Fluss = c("Cavaglia","Alp Grüm", "Robbia", "Lech", "Zuers", "Zug", "Trins","Gschnitz"),
+                                 
+November = c(ss_zr_cav_SWE_november_ges$estimates, ss_zr_gruem_SWE_november_ges$estimates, ss_zr_rob_SWE_november_ges$estimates, NA, NA, NA, NA, NA),
+
+Dezember = c(NA, ss_zr_gruem_SWE_dezember_ges$estimates, ss_zr_rob_SWE_dezember_ges$estimates, ss_zr_lech_SWE_dezember_ges$estimates, NA, NA, NA, ss_zr_gsch_SWE_dezember_ges$estimates),
+
+Januar = c(ss_zr_cav_SWE_januar_ges$estimates, NA, NA, NA, NA, NA, NA, NA),
+
+Februar = c(NA, ss_zr_gruem_SWE_februar_ges$estimates, ss_zr_rob_SWE_februar_ges$estimates, NA, NA, NA, NA, NA),
+                            
+Maerz = c(NA, NA, ss_zr_rob_maerz_ges$estimates, NA, NA, NA, NA, NA),
+                            
+April = c(NA, ss_zr_gruem_SWE_april_ges$estimates, ss_zr_rob_SWE_april_ges$estimates, NA, NA, NA, ss_zr_trins_SWE_april_ges$estimates, NA),
+
+Mai = c(NA, NA, NA, NA, ss_zr_zuers_SWE_mai_ges$estimates, NA, ss_zr_trins_SWE_mai_ges$estimates, NA), 
+
+Juni = c(NA, NA, NA, NA, NA, NA, NA, NA),
+
+November_sub = c(NA, NA, NA, NA, NA, NA, NA, NA),
+
+Dezember_sub = c(NA, NA, NA, NA, NA, NA, NA, ss_zr_gsch_SWE_dezember_sub$estimates),
+
+Januar_sub = c(NA, NA, ss_zr_rob_SWE_januar_sub$estimates, NA, NA, NA, NA, NA),
+
+Februar_sub = c(NA, NA, NA, NA, NA, NA, NA, NA),
+
+Maerz_sub = c(NA, NA, NA, NA, NA, NA, NA, NA),
+                            
+April_sub = c(NA, NA, NA, NA, NA, NA, ss_zr_trins_april_sub$estimates, NA),
+
+Mai_sub = c(NA, ss_zr_gruem_SWE_mai_sub$estimates, NA, NA, NA, NA, NA, NA), 
+
+Juni_sub = c(NA, NA, NA, NA, NA, NA, NA, NA))
+
+library(gt)
+
+gt(zr_SWE_table_monatlich) |>
+  tab_header(title = "Sen Slope Schätzer den Nullwert des SWEs für den gesamten Beobachtungszeitraum und den Subsetzeitraum in der monatliche Betrachtung")|> 
+  cols_label(Fluss = "Station", November ="November", Dezember = "Dezember", Januar = "Januar", Februar = "Februar",  Maerz = "März", April = "April", Mai = "Mai", Juni = "Juni", November_sub = "November_sub", Dezember_sub = "Dezember_sub", Januar_sub = "Januar_sub", Februar_sub = "Februar_sub", Maerz_sub = "März_sub", April_sub = "April_sub", Mai_sub = "Mai_sub", Juni_sub = "Juni_sub")
+
+#plot Intensität des SWE für die einzelnen Monate
+
+library(ggplot2)
+library(dplyr)
+november_zuers_ges <- november_zuers_ges %>%
+  mutate(
+    Jahr = year(date),
+    Tag = yday(date)
+  )
+
+y_wert <- median(november_zuers_ges$SWE, na.rm = TRUE) -
+             ss_zuers_in_SWE_november_ges * median(november_zuers_ges$Tag, na.rm = TRUE)
+
+ggplot(november_zuers_ges,
+       aes(x = Tag, y = SWE, group = Jahr)) +
+  geom_line(colour = "grey") +  geom_abline(
+    slope = ss_zuers_in_SWE_november_ges,
+    intercept = y_wert,
+    colour = "red",
+    linewidth = 1.2
+  ) +
+  labs(
+    title = "SWE im November in Zürs",
+    x = "Tag des Jahres",
+    y = "SWE in mm",
+    color = "Jahr"
+  ) +
+  annotate(
+  "text",
+  x = 150,
+  y = max(zuers_in_SWE_november_ges$SWE, na.rm = TRUE),
+  label = paste0(
+    "Trend im November pro Jahr",
+    round(zuers_in_SWE_november_ges_1, 3),
+    " mm"
+  )
+) + 
+  
+  theme_minimal()
+
+
+
+```
+
+```{r Graphische monatliche Darstellung der Korrrelation }
+
+
+cor_table_monatlich <- data.frame(Fluss = c("Cavaglia","Alp Grüm", "Robbia", "Lech", "Zuers", "Zug", "Trins","Gschnitz"),
+                                 
+November = c(cor_spear_cavaglia_november_ges, cor_spear_gruem_november_ges, cor_spear_robbia_november_ges, cor_spear_lech_november_ges, cor_spear_zuers_november_ges , cor_spear_zug_november_ges , cor_spear_trins_november_ges, cor_spear_gsch_november_ges),
+
+Dezember = c(cor_spear_cavaglia_dezember_ges, cor_spear_gruem_dezember_ges, cor_spear_robbia_dezember_ges, cor_spear_lech_dezember_ges, cor_spear_zuers_dezember_ges, cor_spear_zug_dezember_ges, cor_spear_trins_dezember_ges, cor_spear_gsch_dezember_ges),
+
+Januar = c(cor_spear_cavaglia_januar_ges, cor_spear_gruem_januar_ges, cor_spear_robbia_januar_ges, cor_spear_lech_januar_ges, cor_spear_zuers_januar_ges, cor_spear_zug_januar_ges, cor_spear_trins_januar_ges, cor_spear_gsch_januar_ges),
+
+Februar = c(cor_spear_cavaglia_februar_ges, cor_spear_gruem_februar_ges, cor_spear_robbia_februar_ges, cor_spear_lech_februar_ges, cor_spear_zuers_februar_ges, cor_spear_zug_februar_ges, cor_spear_trins_februar_ges, cor_spear_gsch_februar_ges),
+                            
+Maerz = c(cor_spear_cavaglia_maerz_ges, cor_spear_gruem_maerz_ges, cor_spear_robbia_maerz_ges, cor_spear_lech_maerz_ges, cor_spear_zuers_maerz_ges, cor_spear_zug_maerz_ges, cor_spear_trins_maerz_ges, cor_spear_gsch_maerz_ges),
+                            
+April = c(cor_spear_cavaglia_april_ges, cor_spear_gruem_april_ges, cor_spear_robbia_april_ges, cor_spear_lech_april_ges, cor_spear_zuers_april_ges, cor_spear_zug_april_ges, cor_spear_trins_april_ges, cor_spear_gsch_april_ges),
+
+Mai = c(cor_spear_cavaglia_mai_ges, cor_spear_gruem_mai_ges, cor_spear_robbia_mai_ges, cor_spear_lech_mai_ges, cor_spear_zuers_mai_ges, cor_spear_zug_mai_ges, cor_spear_trins_mai_ges, cor_spear_gsch_mai_ges), 
+
+Juni = c(cor_spear_cavaglia_juni_ges, cor_spear_gruem_juni_ges, cor_spear_robbia_juni_ges, cor_spear_lech_juni_ges, cor_spear_zuers_juni_ges, cor_spear_zug_juni_ges, cor_spear_trins_juni_ges, cor_spear_gsch_juni_ges),
+
+November_sub = c(cor_spear_cavaglia_november_sub, cor_spear_gruem_november_sub, cor_spear_robbia_november_sub, cor_spear_lech_november_sub, cor_spear_zuers_november_sub, cor_spear_zug_november_sub, cor_spear_trins_november_sub, cor_spear_gsch_november_sub),
+
+Dezember_sub = c(cor_spear_cavaglia_dezember_sub, cor_spear_gruem_dezember_sub, cor_spear_robbia_dezember_sub, cor_spear_lech_dezember_sub, cor_spear_zuers_dezember_sub, cor_spear_zug_dezember_sub, cor_spear_trins_dezember_sub, cor_spear_gsch_dezember_sub),
+
+Januar_sub = c(cor_spear_cavaglia_januar_sub, cor_spear_gruem_januar_sub, cor_spear_robbia_januar_sub, cor_spear_lech_januar_sub, cor_spear_zuers_januar_sub, cor_spear_zug_januar_sub, cor_spear_trins_januar_sub, cor_spear_gsch_januar_sub),
+
+Februar_sub = c(cor_spear_cavaglia_februar_sub, cor_spear_gruem_februar_sub, cor_spear_robbia_februar_sub, cor_spear_lech_februar_sub, cor_spear_zuers_februar_sub, cor_spear_zug_februar_sub, cor_spear_trins_februar_sub, cor_spear_gsch_februar_sub),
+
+Maerz_sub = c(cor_spear_cavaglia_maerz_sub, cor_spear_gruem_maerz_sub, cor_spear_robbia_maerz_sub, cor_spear_lech_maerz_sub, cor_spear_zuers_maerz_sub, cor_spear_zug_maerz_sub, cor_spear_trins_maerz_sub, cor_spear_gsch_maerz_sub),
+                            
+April_sub = c(cor_spear_cavaglia_april_sub, cor_spear_gruem_april_sub, cor_spear_robbia_april_sub, cor_spear_lech_april_sub, cor_spear_zuers_april_sub, cor_spear_zug_april_sub, cor_spear_trins_april_sub, cor_spear_gsch_april_sub),
+
+Mai_sub = c(cor_spear_cavaglia_mai_sub, cor_spear_gruem_mai_sub, cor_spear_robbia_mai_sub, cor_spear_lech_mai_sub, cor_spear_zuers_mai_sub, cor_spear_zug_mai_sub, cor_spear_trins_mai_sub, cor_spear_gsch_mai_sub), 
+
+Juni_sub = c(cor_spear_cavaglia_juni_sub, cor_spear_gruem_juni_sub, cor_spear_robbia_juni_sub, cor_spear_lech_juni_sub, cor_spear_zuers_juni_sub, cor_spear_zug_juni_sub, cor_spear_trins_juni_sub, cor_spear_gsch_juni_sub))
+
+
+library(gt)
+
+cor_table_monatlich <- gt(cor_table_monatlich) |>
+  tab_header(title = "Korrelation zwischen SWE und den Abfluss für den gesamten Beobachtungszeitraum und den Subsetzeitraum in der monatliche Betrachtung")|> 
+  cols_label(Fluss = "Station", November ="November", Dezember = "Dezember", Januar = "Januar", Februar = "Februar",  Maerz = "März", April = "April", Mai = "Mai", Juni = "Juni", November_sub = "Nov._sub", Dezember_sub = "Dez._sub", Januar_sub = "Jan._sub", Februar_sub = "Feb._sub", Maerz_sub = "Mär._sub", April_sub = "Apr._sub", Mai_sub = "Mai_sub", Juni_sub = "Jun._sub")|>
+tab_options(
+    table.font.size = px(10)
+)
+
+
+gtsave(cor_table_monatlich,
+  "C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/cor_table_monatlich.png"
+)
+```
+
+```{r Graphische Darstellung des Pettitt Test}
+
+pettitt_table_snow <- data.frame(Fluss = c("Cavaglia","Alp Grüm", "Robbia", "Lech", "Zuers", "Zug", "Trins","Gschnitz"),
+                                 
+HS = c(datacavaglia$date[change_point_hs_cavaglia], datagruem$date[change_point_hs_gruem], datarobbia$date[change_point_hs_robbia], datalech$date[change_point_hs_lech], datazuers$date[change_point_hs_zuers], datazug$date[change_point_hs_zug], datatrins$date[change_point_hs_trins], datagschnitz$date[change_point_hs_gschnitz]),
+
+SWE = c(datacavaglia$date[change_point_SWE_cavaglia], datagruem$date[change_point_SWE_gruem], datarobbia$date[change_point_SWE_robbia], datalech$date[change_point_SWE_lech], datazuers$date[change_point_SWE_zuers], datazug$date[change_point_SWE_zug], datatrins$date[change_point_SWE_trins], datagschnitz$date[change_point_SWE_gsch]))
+
+pettitt_table_Q <- data.frame(Fluss = c("Poschiavino","Lech", "Gschnitzbach"),
+                                 
+Q = c(dataQleprese$date[change_point_leprese], dataQLech$date[change_point_Lech], dataQGschnitzbach$date[change_point_Gschnitzbach]))
+
+
+library(gt)
+
+pettitt_table_snow <- gt(pettitt_table_snow) |>
+  tab_header(title = "Pettitt-Test für die Schneehöhe und das SWE")|> 
+  cols_label(Fluss = "Station", HS ="Schneehöhe", SWE = "SWE")
+
+pettitt_table_Q <- gt(pettitt_table_Q) |>
+  tab_header(title = "Pettitt-Test für die Abflüsse")|> 
+  cols_label(Fluss = "Station", Q ="Abfluss")
+
+gtsave(pettitt_table_snow,
+  "C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/pettitt_table_snow.png"
+)
+gtsave(pettitt_table_Q,
+  "C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/pettitt_table_Q.png"
+)
+
+
+```
+
+```{r Graphische Darstellung der Korrelation für Jahr Frühling und Winter für den gesamten Zeitraum mund den subset}
+
+#Tabelle
+
+cor_SWE_Q_table <- data.frame(Fluss = c("Cavaglia","Alp Grüm", "Robbia", "Lech", "Zuers", "Zug", "Trins","Gschnitz"),
+                                 
+Jahr = c(cor_spear_cav_ges, cor_spear_gruem_ges, cor_spear_robbia_ges, cor_spear_lech_ges, cor_spear_zuers_ges, cor_spear_zug_ges, cor_spear_trins_ges, cor_spear_gsch_ges),
+
+Fruehling = c(cor_spear_cavaglia_s_ges, cor_spear_gruem_s_ges, cor_spear_robbia_s_ges, cor_spear_lech_s_ges, cor_spear_zuers_s_ges, cor_spear_zug_s_ges, cor_spear_trins_s_ges, cor_spear_gsch_s_ges),
+
+Winter = c(cor_spear_cavaglia_w_ges, cor_spear_gruem_w_ges, cor_spear_robbia_w_ges, cor_spear_lech_w_ges, cor_spear_zuers_w_ges, cor_spear_zug_w_ges, cor_spear_trins_w_ges, cor_spear_gsch_w_ges),
+
+Jahr_sub = c(cor_spear_cav_sub, cor_spear_gruem_sub, cor_spear_rob_sub, cor_spear_lech_sub, cor_spear_zuers_sub, cor_spear_zug_sub, cor_spear_trins_sub, cor_spear_gsch_sub),
+                            
+Fruehling_sub = c(cor_spear_cavaglia_s_sub, cor_spear_gruem_s_sub, cor_spear_robbia_s_sub, cor_spear_lech_s_sub, cor_spear_zuers_s_sub, cor_spear_zug_s_sub, cor_spear_trins_s_sub, cor_spear_gsch_s_sub),
+                            
+Winter_sub = c(cor_spear_cavaglia_w_sub, cor_spear_gruem_w_sub, cor_spear_robbia_w_sub, cor_spear_lech_w_sub, cor_spear_zuers_w_sub, cor_spear_zug_w_sub, cor_spear_trins_w_sub, cor_spear_gsch_w_sub))
+
+library(gt)
+
+cor_SWE_Q_table <- gt(cor_SWE_Q_table) |>
+  tab_header(title = "Korrelation zwischen dem SWE und dem Abfluss im gesamten Zeitraum und dem Subsetzeitraum")|> 
+  cols_label(Fluss = "Station", Jahr ="Jahr", Fruehling = "Frühling", Winter = "Winter", Jahr_sub = "Jahr_sub",  Fruehling_sub = "Frühling_sub", Winter_sub = "Winter_sub")
+
+
+gtsave(cor_SWE_Q_table,
+  "C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/cor_SWE_Q_table.png"
+)
+
+
+
+
+```
+
+```{r Tabellarische Darstellung vom Sen slope  des Abflusses für den subset Zeitraum und den Gesamtzeitraum für Jahr Frühling, Winter}
+
+library(dplyr)
+
+print(sen_Q_leprese)#ns
+print(sen_Q_Lech)#s
+print(sen_Q_Gschnitzbach)#s
+print(sen_Q_leprese_s_ges)#ns
+print(sen_Q_Lech_s_ges)#s
+print(sen_Q_Gschnitzbach_s_ges)#s
+print(sen_Q_leprese_w_ges)#s
+print(sen_Q_Lech_w_ges)#s
+print(sen_Qleprese_sub)#ns
+print(sen_Qlech_sub)#s
+print(sen_Qgsch_sub)#ns
+print(sen_Qleprese_s_sub)#s
+print(sen_Qlech_s_sub)#s
+print(sen_Qgsch_s_sub)#s
+print(sen_Qleprese_w_sub)#s
+print(sen_Qlech_w_sub)#s
+print(sen_Qgsch_w_sub) #s
+
+sen_Q_Lech_t <- sen_Q_Lech$estimates *365 
+sen_Q_Gschnitzbach_t <- sen_Q_Gschnitzbach$estimates * 365 
+sen_Q_Lech_s_ges_t <- sen_Q_Lech_s_ges$estimates * 122 
+sen_Q_Gschnitzbach_s_ges_t <- sen_Q_Gschnitzbach_s_ges$estimates * 122
+sen_Q_leprese_w_ges_t <- sen_Q_leprese_w_ges$estimates * 120 
+sen_Q_Lech_w_ges_t <- sen_Q_Lech_w_ges$estimates * 120 
+sen_Q_Gschnitzbach_w_ges_t <- sen_Q_Gschnitzbach_w_ges$estimates * 120 
+sen_Qlech_sub_t <- sen_Qlech_sub$estimates * 365 
+sen_Qleprese_s_sub_t <- sen_Qleprese_s_sub$estimates * 122 
+sen_Qlech_s_sub_t <- sen_Qlech_s_sub$estimates * 122 
+sen_Qgsch_s_sub_t <- sen_Qgsch_s_sub$estimates * 122
+sen_Qleprese_w_sub_t <- sen_Qleprese_w_sub$estimates * 120
+sen_Qlech_w_sub_t <- sen_Qlech_w_sub$estimates * 120 
+sen_Qgsch_w_sub_t <- sen_Qgsch_w_sub$estimates * 120 
+
+  #Tabelle
+
+
+
+abfluss_table_ss <- data.frame(Fluss = c("Poschiavino","Lech", "Gschnitzbach"),
+                            
+SenSlope = c(NA, sen_Q_Lech_t %>% round(3), sen_Q_Gschnitzbach_t %>% round(3)),
+
+SenSlope_s_ges = c(NA, sen_Q_Lech_s_ges_t %>% round(3), sen_Q_Gschnitzbach_s_ges_t %>% round(3)),
+
+SenSlope_w_ges = c(sen_Q_leprese_w_ges_t %>% round(3), sen_Q_Lech_w_ges_t %>% round(3), sen_Q_Gschnitzbach_w_ges_t %>% round(3)),
+
+
+SenSlope_sub = c(NA, sen_Qlech_sub_t%>% round(3), NA),
+
+SenSlope_s_sub = c(sen_Qleprese_s_sub_t %>% round(3), sen_Qlech_s_sub_t %>% round(3), sen_Qgsch_s_sub_t %>% round(3)),
+
+SenSlope_w_sub = c(sen_Qleprese_w_sub_t %>% round(3), sen_Qlech_w_sub_t %>% round(3), sen_Qgsch_w_sub_t %>% round(3)))
+
+
+
+library(gt)
+
+table_Q_ss <- gt(abfluss_table_ss) |>
+  tab_header(title = "Sen's Slope Schätzer des Abflusses im Gesamtzeitraum und im Vergleichszeitraum (1992 - 2022)")|> 
+  cols_label(Fluss = "Fluss", SenSlope = "Jahr", SenSlope_s_ges = "Frühling", SenSlope_w_ges = "Winter", SenSlope_sub = "Jahr_sub", SenSlope_s_sub = "Frühling_sub", SenSlope_w_sub = "Winter_sub")
+
+gtsave(table_Q_ss,
+  "C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/table_Q_ss.png"
+)
+```
+
+```{r Hypsometrische Kurve}
+
+#Lech
+
+library(terra)
+library(ggplot2)
+library(dplyr)
+
+dem_lech <- rast("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/QGIS_Arbeiten/EZG_Erstellung/EZG_Lech.tif")
+
+elev_lech <- values(dem_lech)
+elev_lech <- elev_lech[is.finite(elev_lech)]
+
+area_m2 <- prod(res(dem_lech))
+area_km2 <- area_m2 / 1e6
+
+
+EZG_lech <- data.frame(elev_lech = elev_lech)
+
+EZG_lech <- EZG_lech %>%
+  arrange(desc(elev_lech))
+  
+EZG_lech <- EZG_lech %>%
+  mutate(
+    a_km2 = seq_along(elev_lech) * area_km2
+  )
+
+ggplot(EZG_lech, aes(x = a_km2, y = elev_lech)) +
+  geom_line(linewidth = 1) +
+  
+  labs(
+    title = "Hypsometrische Kurve am Pegel Lech Tannenbergbrücke",
+    x = "Kumulative Fläche [km²]",
+    y = "Höhe [m]"
+  ) +
+  
+  theme_minimal()
+
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/hypsometrische_kurve_lech.png",
+       width = 8,
+       height = 6,
+       dpi = 300, bg = "white")
+
+#Poschiavino
+
+dem_posch <- rast("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/QGIS_Arbeiten/EZG_Erstellung/EZG_Poschiavino.tif")
+
+elev_posch <- values(dem_posch)
+elev_posch <- elev_posch[is.finite(elev_posch)]
+
+area_m2 <- prod(res(dem_posch))
+area_km2 <- area_m2 / 1e6
+
+
+EZG_posch <- data.frame(elev_posch = elev_posch)
+
+EZG_posch <- EZG_posch %>%
+  arrange(desc(elev_posch))
+  
+EZG_posch <- EZG_posch %>%
+  mutate(
+    a_km2 = seq_along(elev_posch) * area_km2
+  )
+
+ggplot(EZG_posch, aes(x = a_km2, y = elev_posch)) +
+  geom_line(linewidth = 1) +
+  
+  labs(
+    title = "Hypsometrische Kurve am Pegel Le Prese",
+    x = "Kumulative Fläche [km²]",
+    y = "Höhe [m]"
+  ) +
+  
+  theme_minimal()
+
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/hypsometrische_kurve_poschiavino.png",
+       width = 8,
+       height = 6,
+       dpi = 300, bg = "white")
+
+#Gschnitzbach
+
+dem_gsch <- rast("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/QGIS_Arbeiten/EZG_Erstellung/EZG_gschnitzbach.tif")
+
+elev_gsch <- values(dem_gsch)
+elev_gsch <- elev_gsch[is.finite(elev_gsch)]
+
+area_m2 <- prod(res(dem_gsch))
+area_km2 <- area_m2 / 1e6
+
+
+EZG_gsch <- data.frame(elev_gsch = elev_gsch)
+
+EZG_gsch <- EZG_gsch %>%
+  arrange(desc(elev_gsch))
+  
+EZG_gsch <- EZG_gsch %>%
+  mutate(
+    a_km2 = seq_along(elev_gsch) * area_km2
+  )
+
+ggplot(EZG_gsch, aes(x = a_km2, y = elev_gsch)) +
+  geom_line(linewidth = 1) +
+  
+  labs(
+    title = "Hypsometrische Kurve am Pegel Steinach am Brenner",
+    x = "Kumulative Fläche [km²]",
+    y = "Höhe [m]"
+  ) +
+  
+  theme_minimal()
+
+ggsave("C:/Users/maggi/OneDrive/Studium/7_Semster/BA/Dat/Plots/hypsometrische_kurve_gschnitzbach.png",
+       width = 8,
+       height = 6,
+       dpi = 300, bg = "white")
+
+
+```
+
+
